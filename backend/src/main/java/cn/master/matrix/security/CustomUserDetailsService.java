@@ -8,6 +8,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 /**
  * @author Created by 11's papa on 06/21/2024
  **/
@@ -19,6 +22,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .where(User::getName).eq(username)
                 .oneOpt()
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with -> username or email: " + username));
-        return UserPrinciple.build(user);
+        ArrayList<String> permissions = new ArrayList<>(Arrays.asList("test", "admin"));
+        return new UserPrinciple(user, permissions);
     }
 }

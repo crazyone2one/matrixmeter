@@ -23,8 +23,10 @@ spring:
       connection-test-query: SELECT 1
 matrix:
   meter:
-    jwtSecret: a4a95385c5ed79118b720e6a7538c0af106905954235bb0aeb75a7ff89a05ef5
-    jwtExpirationMs: 86400000
+    jwt:
+      secret-key: a4a95385c5ed79118b720e6a7538c0af106905954235bb0aeb75a7ff89a05ef5
+      expiration: 86400000 # a day
+      refresh-expiration: 604800000 # 7 days
 
 springdoc:
   api-docs:

@@ -1,5 +1,7 @@
 package cn.master.matrix.security;
 
+import cn.master.matrix.handler.ResultHandler;
+import cn.master.matrix.handler.result.MmHttpResultCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,8 +12,6 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Created by 11's papa on 06/21/2024
@@ -25,13 +25,7 @@ public class AuthEntryPointJwt implements AuthenticationEntryPoint {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-        final Map<String, Object> body = new HashMap<>();
-        body.put("status", HttpServletResponse.SC_UNAUTHORIZED);
-        body.put("error", "Unauthorized");
-        body.put("message", authException.getMessage());
-        body.put("path", request.getServletPath());
-
         final ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValue(response.getOutputStream(), body);
+        mapper.writeValue(response.getOutputStream(), ResultHandler.error(MmHttpResultCode.UNAUTHORIZED.getCode(), authException.getMessage(), request.getServletPath()));
     }
 }

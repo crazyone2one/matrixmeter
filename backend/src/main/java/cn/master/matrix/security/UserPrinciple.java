@@ -1,23 +1,51 @@
 package cn.master.matrix.security;
 
 import cn.master.matrix.entity.User;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Created by 11's papa on 06/21/2024
  **/
 @Data
 public class UserPrinciple implements UserDetails {
-    private String userId;
-    private String username;
-    private String email;
+    private User user;
+    private List<GrantedAuthority> authorities;
+    private List<String> permissions;
+
+    public UserPrinciple(User user, List<String> permissions) {
+        this.user = user;
+        this.permissions = permissions;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (Objects.isNull(authorities)) {
+            authorities = new ArrayList<>();
+            permissions.forEach(permission -> {
+                SimpleGrantedAuthority authority = new SimpleGrantedAuthority(permission);
+                authorities.add(authority);
+            });
+        }
+        return authorities;
+    }
+
+    @Override
+    public String getPassword() {
+        return user.getPassword();
+    }
+
+    @Override
+    public String getUsername() {
+        return user.getName();
+    }
 
     @Override
     public boolean isAccountNonExpired() {
@@ -36,32 +64,6 @@ public class UserPrinciple implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
-    }
-
-    @JsonIgnore
-    private String password;
-
-    private Collection<? extends GrantedAuthority> authorities;
-    public UserPrinciple(String id, String username, String email, String password,
-                         Collection<? extends GrantedAuthority> authorities) {
-        this.userId = id;
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.authorities = authorities;
-    }
-
-    public static UserPrinciple build(User user) {
-        //List<GrantedAuthority> authorities = user.getRoles().stream()
-        //        .map(role -> new SimpleGrantedAuthority(role.getName().name()))
-        //        .collect(Collectors.toList());
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        return new UserPrinciple(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getPassword(),
-                authorities);
+        return user.getEnable();
     }
 }

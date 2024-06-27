@@ -1,12 +1,12 @@
 package cn.master.matrix.security;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -22,6 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  **/
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfiguration {
     private final CustomUserDetailsService customUserDetailsService;
@@ -34,8 +35,11 @@ public class SecurityConfiguration {
         security.csrf(AbstractHttpConfigurer::disable);
         security.exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler));
         security.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        security.formLogin(AbstractHttpConfigurer::disable);
+        security.httpBasic(AbstractHttpConfigurer::disable);
         security.authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/auth/signin").permitAll()
+                .requestMatchers("/api/auth/demo").hasAuthority("test")
                 .requestMatchers("/v3/api-docs").permitAll()
                 .anyRequest().authenticated());
         security.authenticationProvider(authenticationProvider());
@@ -68,7 +72,7 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter(jwtProvider, customUserDetailsService);
+    public TokenAuthenticationFilter authenticationJwtTokenFilter() {
+        return new TokenAuthenticationFilter(jwtProvider, customUserDetailsService);
     }
 }
