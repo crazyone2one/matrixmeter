@@ -1,4 +1,4 @@
-package cn.master.matrix.configuration;
+package cn.master.matrix.config;
 
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.core.FlexGlobalConfig;
@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
  **/
 
 @Configuration
-public class MyBatisFlexConfiguration implements MyBatisFlexCustomizer {
+public class MyBatisFlexConfig implements MyBatisFlexCustomizer {
 
     @Override
     public void customize(FlexGlobalConfig globalConfig) {

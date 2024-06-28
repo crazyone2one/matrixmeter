@@ -1,10 +1,12 @@
 package cn.master.matrix.security;
 
+import cn.master.matrix.service.UserRolePermissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.authorization.method.PrePostTemplateDefaults;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,6 +31,7 @@ public class SecurityConfiguration {
     private final AuthEntryPointJwt unauthorizedHandler;
     private final JwtProvider jwtProvider;
     private final CustomLogoutHandler logoutHandler;
+    private final UserRolePermissionService userRolePermissionService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity security) throws Exception {
@@ -39,7 +42,6 @@ public class SecurityConfiguration {
         security.httpBasic(AbstractHttpConfigurer::disable);
         security.authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/auth/signin").permitAll()
-                .requestMatchers("/api/auth/demo").hasAuthority("test")
                 .requestMatchers("/v3/api-docs").permitAll()
                 .anyRequest().authenticated());
         security.authenticationProvider(authenticationProvider());
@@ -74,5 +76,15 @@ public class SecurityConfiguration {
     @Bean
     public TokenAuthenticationFilter authenticationJwtTokenFilter() {
         return new TokenAuthenticationFilter(jwtProvider, customUserDetailsService);
+    }
+
+    @Bean("mm")
+    public SecurityService securityService() {
+        return new SecurityService(userRolePermissionService);
+    }
+
+    @Bean
+    static PrePostTemplateDefaults prePostTemplateDefaults() {
+        return new PrePostTemplateDefaults();
     }
 }

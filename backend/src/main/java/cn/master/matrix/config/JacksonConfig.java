@@ -1,4 +1,4 @@
-package cn.master.matrix.configuration;
+package cn.master.matrix.config;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;

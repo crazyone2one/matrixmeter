@@ -1,6 +1,8 @@
 package cn.master.matrix.controller;
 
 import cn.master.matrix.entity.UserKey;
+import cn.master.matrix.handler.annotation.HasAnyAuthorize;
+import cn.master.matrix.handler.annotation.HasAuthorize;
 import cn.master.matrix.mapper.UserKeyMapper;
 import cn.master.matrix.payload.LoginRequest;
 import cn.master.matrix.payload.response.JwtResponse;
@@ -8,6 +10,7 @@ import cn.master.matrix.security.JwtProvider;
 import cn.master.matrix.security.UserPrinciple;
 import cn.master.matrix.service.UserKeyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -45,6 +47,7 @@ public class AuthController {
     private final UserKeyService userKeyService;
 
     @PostMapping("/signin")
+    @Operation(summary = "使用账号密码登录")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
@@ -72,6 +75,7 @@ public class AuthController {
     }
 
     @PostMapping("/refreshToken")
+    @Operation(summary = "刷新令牌")
     public void authenticateUser(@Valid HttpServletRequest request, HttpServletResponse response) throws IOException {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         final String refreshToken = authHeader.substring(7);
@@ -102,7 +106,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasAuthority('test1234')")
+    @HasAnyAuthorize(authorities = {"ORGANIZATION_MEMBER:READ", "ORGANIZATION_USER_ROLE"})
     public ResponseEntity<?> me() {
         val authentication = SecurityContextHolder.getContext().getAuthentication();
         val principal = authentication.getPrincipal();
@@ -111,7 +115,7 @@ public class AuthController {
     }
 
     @GetMapping("/demo")
-    @PreAuthorize("hasAuthority('test')")
+    @HasAuthorize("ORGANIZATION_USER_ROLE")
     public String demo() {
         return "demo";
     }

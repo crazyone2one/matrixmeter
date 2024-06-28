@@ -4,6 +4,7 @@ import cn.master.matrix.handler.result.MmHttpResultCode;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -41,6 +42,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({Exception.class})
     public ResponseEntity<ResultHandler> handleException(Exception e) {
+        if (e instanceof AccessDeniedException) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    //.body(ResultHandler.error(MmHttpResultCode.FORBIDDEN.getCode(), MmHttpResultCode.FORBIDDEN.getMessage(), getStackTraceAsString(e)));
+                    .body(ResultHandler.error(MmHttpResultCode.FORBIDDEN.getCode(), e.getMessage(), getStackTraceAsString(e)));
+        }
         return ResponseEntity.internalServerError()
                 .body(ResultHandler.error(MmHttpResultCode.FAILED.getCode(), e.getCause().getMessage(), getStackTraceAsString(e)));
     }

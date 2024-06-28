@@ -1,0 +1,888 @@
+[
+  {
+    "id": "SYSTEM",
+    "name": "permission.system.name",
+    "type": "SYSTEM",
+    "children": [
+      {
+        "id": "SYSTEM_USER",
+        "name": "permission.system_user.name",
+        "permissions": [
+          {
+            "id": "SYSTEM_USER:READ"
+          },
+          {
+            "id": "SYSTEM_USER:READ+ADD"
+          },
+          {
+            "id": "SYSTEM_USER:READ+IMPORT"
+          },
+          {
+            "id": "SYSTEM_USER:READ+UPDATE"
+          },
+          {
+            "id": "SYSTEM_USER:READ+INVITE",
+            "name": "permission.system_user.invite"
+          },
+          {
+            "id": "SYSTEM_USER:READ+DELETE"
+          }
+        ]
+      },
+      {
+        "id": "SYSTEM_ORGANIZATION_PROJECT",
+        "name": "permission.system_organization_project.name",
+        "permissions": [
+          {
+            "id": "SYSTEM_ORGANIZATION_PROJECT:READ"
+          },
+          {
+            "id": "SYSTEM_ORGANIZATION_PROJECT:READ+ADD"
+          },
+          {
+            "id": "SYSTEM_ORGANIZATION_PROJECT:READ+UPDATE"
+          },
+          {
+            "id": "SYSTEM_ORGANIZATION_PROJECT:READ+DELETE"
+          },
+          {
+            "id": "SYSTEM_ORGANIZATION_PROJECT:READ+RECOVER"
+          },
+          {
+            "id": "SYSTEM_ORGANIZATION_PROJECT:READ+ADD_MEMBER",
+            "name": "permission.system_organization_project_member.add"
+          },
+          {
+            "id": "SYSTEM_ORGANIZATION_PROJECT:READ+DELETE_MEMBER",
+            "name": "permission.system_organization_project_member.delete"
+          }
+        ]
+      },
+      {
+        "id": "SYSTEM_USER_ROLE",
+        "name": "permission.system_user_role.name",
+        "permissions": [
+          {
+            "id": "SYSTEM_USER_ROLE:READ"
+          },
+          {
+            "id": "SYSTEM_USER_ROLE:READ+ADD"
+          },
+          {
+            "id": "SYSTEM_USER_ROLE:READ+UPDATE"
+          },
+          {
+            "id": "SYSTEM_USER_ROLE:READ+DELETE"
+          }
+        ]
+      },
+      {
+        "id": "SYSTEM_TEST_RESOURCE_POOL",
+        "name": "permission.system_test_resource_pool.name",
+        "permissions": [
+          {
+            "id": "SYSTEM_TEST_RESOURCE_POOL:READ"
+          },
+          {
+            "id": "SYSTEM_TEST_RESOURCE_POOL:READ+ADD",
+            "license": true
+          },
+          {
+            "id": "SYSTEM_TEST_RESOURCE_POOL:READ+UPDATE"
+          },
+          {
+            "id": "SYSTEM_TEST_RESOURCE_POOL:READ+DELETE"
+          }
+        ]
+      },
+      {
+        "id": "SYSTEM_PLUGIN",
+        "name": "permission.system_plugin.name",
+        "permissions": [
+          {
+            "id": "SYSTEM_PLUGIN:READ"
+          },
+          {
+            "id": "SYSTEM_PLUGIN:READ+ADD"
+          },
+          {
+            "id": "SYSTEM_PLUGIN:READ+UPDATE"
+          },
+          {
+            "id": "SYSTEM_PLUGIN:READ+DELETE"
+          }
+        ]
+      },
+      {
+        "id": "SYSTEM_PARAMETER_SETTING",
+        "name": "permission.system_parameter_setting.name",
+        "permissions": [
+          {
+            "id": "SYSTEM_PARAMETER_SETTING_BASE:READ",
+            "name": "permission.system_parameter_setting_base.read"
+          },
+          {
+            "id": "SYSTEM_PARAMETER_SETTING_BASE:READ+UPDATE",
+            "name": "permission.system_parameter_setting_base.update"
+          },
+          {
+            "id": "SYSTEM_PARAMETER_SETTING_DISPLAY:READ",
+            "name": "permission.system_parameter_setting_display.read",
+            "license": true
+          },
+          {
+            "id": "SYSTEM_PARAMETER_SETTING_DISPLAY:READ+UPDATE",
+            "name": "permission.system_parameter_setting_display.update",
+            "license": true
+          },
+          {
+            "id": "SYSTEM_PARAMETER_SETTING_AUTH:READ",
+            "name": "permission.system_parameter_setting_auth.read",
+            "license": true
+          },
+          {
+            "id": "SYSTEM_PARAMETER_SETTING_AUTH:READ+ADD",
+            "name": "permission.system_parameter_setting_auth.add",
+            "license": true
+          },
+          {
+            "id": "SYSTEM_PARAMETER_SETTING_AUTH:READ+UPDATE",
+            "name": "permission.system_parameter_setting_auth.update",
+            "license": true
+          },
+          {
+            "id": "SYSTEM_PARAMETER_SETTING_AUTH:READ+DELETE",
+            "name": "permission.system_parameter_setting_auth.delete",
+            "license": true
+          },
+          {
+            "id": "SYSTEM_PARAMETER_SETTING_MEMORY_CLEAN:READ",
+            "name": "permission.system_parameter_setting_memory_clean.read"
+          },
+          {
+            "id": "SYSTEM_PARAMETER_SETTING_MEMORY_CLEAN:READ+UPDATE",
+            "name": "permission.system_parameter_setting_memory_clean.update"
+          },
+          {
+            "id": "SYSTEM_PARAMETER_SETTING_QRCODE:READ",
+            "name": "permission.system_parameter_setting_qrcode.read",
+            "license": true
+          },
+          {
+            "id": "SYSTEM_PARAMETER_SETTING_QRCODE:READ+UPDATE",
+            "name": "permission.system_parameter_setting_qrcode.update",
+            "license": true
+          }
+        ]
+      },
+      {
+        "id": "SYSTEM_AUTHORIZATION_MANAGEMENT",
+        "name": "permission.system_auth",
+        "permissions": [
+          {
+            "id": "SYSTEM_AUTH:READ"
+          },
+          {
+            "id": "SYSTEM_AUTH:READ+UPDATE"
+          }
+        ],
+        "license": true
+      },
+      {
+        "id": "SYSTEM_LOG",
+        "name": "permission.system_operation_log.name",
+        "permissions": [
+          {
+            "id": "SYSTEM_LOG:READ"
+          }
+        ]
+      },
+      {
+        "id": "SYSTEM_TASK_CENTER",
+        "name": "permission.organization_task_center.name",
+        "permissions": [
+          {
+            "id": "SYSTEM_TASK_CENTER:READ"
+          },
+          {
+            "id": "SYSTEM_TASK_CENTER:READ+STOP",
+            "name": "permission.organization_task_center.stop"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ORGANIZATION",
+    "name": "permission.organization.name",
+    "type": "ORGANIZATION",
+    "children": [
+      {
+        "id": "ORGANIZATION_USER_ROLE",
+        "name": "permission.organization_user_role.name",
+        "permissions": [
+          {
+            "id": "ORGANIZATION_USER_ROLE:READ"
+          },
+          {
+            "id": "ORGANIZATION_USER_ROLE:READ+ADD"
+          },
+          {
+            "id": "ORGANIZATION_USER_ROLE:READ+UPDATE"
+          },
+          {
+            "id": "ORGANIZATION_USER_ROLE:READ+DELETE"
+          }
+        ]
+      },
+      {
+        "id": "ORGANIZATION_MEMBER",
+        "name": "permission.organization_member.name",
+        "permissions": [
+          {
+            "id": "ORGANIZATION_MEMBER:READ"
+          },
+          {
+            "id": "ORGANIZATION_MEMBER:READ+ADD",
+            "name": "permission.organization_member.add"
+          },
+          {
+            "id": "ORGANIZATION_MEMBER:READ+UPDATE",
+            "name": "permission.organization_member.update"
+          },
+          {
+            "id": "ORGANIZATION_MEMBER:READ+DELETE",
+            "name": "permission.organization_member.delete"
+          }
+        ]
+      },
+      {
+        "id": "SYSTEM_SERVICE_INTEGRATION",
+        "name": "permission.service_integration.name",
+        "permissions": [
+          {
+            "id": "SYSTEM_SERVICE_INTEGRATION:READ"
+          },
+          {
+            "id": "SYSTEM_SERVICE_INTEGRATION:READ+UPDATE"
+          },
+          {
+            "id": "SYSTEM_SERVICE_INTEGRATION:READ+DELETE",
+            "name": "permission.service_integration.reset"
+          }
+        ]
+      },
+      {
+        "id": "ORGANIZATION_PROJECT",
+        "name": "permission.project.name",
+        "permissions": [
+          {
+            "id": "ORGANIZATION_PROJECT:READ"
+          },
+          {
+            "id": "ORGANIZATION_PROJECT:READ+ADD"
+          },
+          {
+            "id": "ORGANIZATION_PROJECT:READ+UPDATE"
+          },
+          {
+            "id": "ORGANIZATION_PROJECT:READ+DELETE"
+          },
+          {
+            "id": "ORGANIZATION_PROJECT:READ+RECOVER",
+            "name": "permission.organization_project.recover"
+          },
+          {
+            "id": "ORGANIZATION_PROJECT:READ+ADD_MEMBER",
+            "name": "permission.system_organization_project_member.add"
+          },
+          {
+            "id": "ORGANIZATION_PROJECT:READ+DELETE_MEMBER",
+            "name": "permission.system_organization_project_member.delete"
+          }
+        ]
+      },
+      {
+        "id": "ORGANIZATION_TEMPLATE",
+        "name": "permission.organization_template.name",
+        "permissions": [
+          {
+            "id": "ORGANIZATION_TEMPLATE:READ"
+          },
+          {
+            "id": "ORGANIZATION_TEMPLATE:READ+ADD"
+          },
+          {
+            "id": "ORGANIZATION_TEMPLATE:READ+UPDATE"
+          },
+          {
+            "id": "ORGANIZATION_TEMPLATE:READ+DELETE"
+          },
+          {
+            "id": "ORGANIZATION_TEMPLATE:READ+ENABLE",
+            "name": "permission.system_organization_template.enable"
+          }
+        ]
+      },
+      {
+        "id": "ORGANIZATION_LOG",
+        "name": "permission.organization_operation_log.name",
+        "permissions": [
+          {
+            "id": "ORGANIZATION_LOG:READ"
+          }
+        ]
+      },
+      {
+        "id": "ORGANIZATION_TASK_CENTER",
+        "name": "permission.organization_task_center.name",
+        "permissions": [
+          {
+            "id": "ORGANIZATION_TASK_CENTER:READ"
+          },
+          {
+            "id": "ORGANIZATION_TASK_CENTER:READ+STOP",
+            "name": "permission.organization_task_center.stop"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "PERSONAL",
+    "name": "permission.my_settings",
+    "type": "SYSTEM",
+    "children": [
+      {
+        "id": "API_KEY",
+        "name": "permission.api_key",
+        "permissions": [
+          {
+            "id": "SYSTEM_PERSONAL_API_KEY:READ"
+          },
+          {
+            "id": "SYSTEM_PERSONAL_API_KEY:READ+ADD"
+          },
+          {
+            "id": "SYSTEM_PERSONAL_API_KEY:READ+UPDATE"
+          },
+          {
+            "id": "SYSTEM_PERSONAL_API_KEY:READ+DELETE"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "TEST_PLAN",
+    "name": "permission.test_plan.name",
+    "type": "PROJECT",
+    "children": [
+      {
+        "id": "PROJECT_TEST_PLAN",
+        "name": "permission.test_plan",
+        "permissions": [
+          {
+            "id": "PROJECT_TEST_PLAN:READ"
+          },
+          {
+            "id": "PROJECT_TEST_PLAN:READ+ADD"
+          },
+          {
+            "id": "PROJECT_TEST_PLAN:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_TEST_PLAN:READ+DELETE"
+          },
+          {
+            "id": "PROJECT_TEST_PLAN:READ+ASSOCIATION",
+            "name": "permission.association_and_disassociation"
+          },
+          {
+            "id": "PROJECT_TEST_PLAN:READ+EXECUTE"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_TEST_PLAN_REPORT",
+        "name": "permission.test_plan_report",
+        "permissions": [
+          {
+            "id": "PROJECT_TEST_PLAN_REPORT:READ"
+          },
+          {
+            "id": "PROJECT_TEST_PLAN_REPORT:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_TEST_PLAN_REPORT:READ+SHARE",
+            "name": "permission.api_doc.share"
+          },
+          {
+            "id": "PROJECT_TEST_PLAN_REPORT:READ+DELETE"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "PROJECT",
+    "name": "permission.project.name",
+    "type": "PROJECT",
+    "children": [
+      {
+        "id": "PROJECT_BASE_INFO",
+        "name": "permission.project_base_info.name",
+        "permissions": [
+          {
+            "id": "PROJECT_BASE_INFO:READ"
+          },
+          {
+            "id": "PROJECT_BASE_INFO:READ+UPDATE"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_USER",
+        "name": "permission.project_user.name",
+        "permissions": [
+          {
+            "id": "PROJECT_USER:READ"
+          },
+          {
+            "id": "PROJECT_USER:READ+ADD"
+          },
+          {
+            "id": "PROJECT_USER:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_USER:READ+DELETE"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_GROUP",
+        "name": "permission.project_group.name",
+        "permissions": [
+          {
+            "id": "PROJECT_GROUP:READ"
+          },
+          {
+            "id": "PROJECT_GROUP:READ+ADD"
+          },
+          {
+            "id": "PROJECT_GROUP:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_GROUP:READ+DELETE"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_ENVIRONMENT",
+        "name": "permission.project_environment.name",
+        "permissions": [
+          {
+            "id": "PROJECT_ENVIRONMENT:READ"
+          },
+          {
+            "id": "PROJECT_ENVIRONMENT:READ+ADD"
+          },
+          {
+            "id": "PROJECT_ENVIRONMENT:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_ENVIRONMENT:READ+DELETE"
+          },
+          {
+            "id": "PROJECT_ENVIRONMENT:READ+IMPORT"
+          },
+          {
+            "id": "PROJECT_ENVIRONMENT:READ+EXPORT"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_TEMPLATE",
+        "name": "permission.project_template.name",
+        "permissions": [
+          {
+            "id": "PROJECT_TEMPLATE:READ"
+          },
+          {
+            "id": "PROJECT_TEMPLATE:READ+ADD"
+          },
+          {
+            "id": "PROJECT_TEMPLATE:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_TEMPLATE:READ+DELETE"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_MESSAGE",
+        "name": "permission.project_message.name",
+        "permissions": [
+          {
+            "id": "PROJECT_MESSAGE:READ"
+          },
+          {
+            "id": "PROJECT_MESSAGE:READ+ADD"
+          },
+          {
+            "id": "PROJECT_MESSAGE:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_MESSAGE:READ+DELETE"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_FILE_MANAGEMENT",
+        "name": "permission.project_file.name",
+        "permissions": [
+          {
+            "id": "PROJECT_FILE_MANAGEMENT:READ"
+          },
+          {
+            "id": "PROJECT_FILE_MANAGEMENT:READ+ADD"
+          },
+          {
+            "id": "PROJECT_FILE_MANAGEMENT:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_FILE_MANAGEMENT:READ+DOWNLOAD",
+            "name": "permission.project_file.download"
+          },
+          {
+            "id": "PROJECT_FILE_MANAGEMENT:READ+DELETE"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_APPLICATION",
+        "name": "permission.project_application.name",
+        "permissions": [
+          {
+            "id": "PROJECT_APPLICATION_TEST_PLAN:READ",
+            "name": "permission.project_application_test_plan.read"
+          },
+          {
+            "id": "PROJECT_APPLICATION_TEST_PLAN:UPDATE",
+            "name": "permission.project_application_test_plan.update"
+          },
+          {
+            "id": "PROJECT_APPLICATION_API:READ",
+            "name": "permission.project_application_api.read"
+          },
+          {
+            "id": "PROJECT_APPLICATION_API:UPDATE",
+            "name": "permission.project_application_api.update"
+          },
+          {
+            "id": "PROJECT_APPLICATION_CASE:READ",
+            "name": "permission.project_application_case.read"
+          },
+          {
+            "id": "PROJECT_APPLICATION_CASE:UPDATE",
+            "name": "permission.project_application_case.update"
+          },
+          {
+            "id": "PROJECT_APPLICATION_BUG:READ",
+            "name": "permission.project_application_bug.read"
+          },
+          {
+            "id": "PROJECT_APPLICATION_BUG:UPDATE",
+            "name": "permission.project_application_bug.update"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_CUSTOM_FUNCTION",
+        "name": "permission.project_custom_function.name",
+        "permissions": [
+          {
+            "id": "PROJECT_CUSTOM_FUNCTION:READ"
+          },
+          {
+            "id": "PROJECT_CUSTOM_FUNCTION:READ+ADD"
+          },
+          {
+            "id": "PROJECT_CUSTOM_FUNCTION:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_CUSTOM_FUNCTION:READ+DELETE"
+          },
+          {
+            "id": "PROJECT_CUSTOM_FUNCTION:READ+EXECUTE",
+            "name": "permission.project_custom_function.execute"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_LOG",
+        "name": "permission.project_log.name",
+        "permissions": [
+          {
+            "id": "PROJECT_LOG:READ"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "CASE_MANAGEMENT",
+    "name": "permission.case_management.name",
+    "type": "PROJECT",
+    "children": [
+      {
+        "id": "FUNCTIONAL_CASE",
+        "name": "permission.functional_case.name",
+        "permissions": [
+          {
+            "id": "FUNCTIONAL_CASE:READ"
+          },
+          {
+            "id": "FUNCTIONAL_CASE:READ+ADD"
+          },
+          {
+            "id": "FUNCTIONAL_CASE:READ+UPDATE"
+          },
+          {
+            "id": "FUNCTIONAL_CASE:READ+DELETE",
+            "name": "permission.api_definition.delete_and_recover"
+          },
+          {
+            "id": "FUNCTIONAL_CASE:READ+COMMENT",
+            "name": "permission.functional_case.comment"
+          },
+          {
+            "id": "FUNCTIONAL_CASE:READ+IMPORT"
+          },
+          {
+            "id": "FUNCTIONAL_CASE:READ+MINDER",
+            "name": "permission.functional_case.minder"
+          }
+        ]
+      },
+      {
+        "id": "CASE_REVIEW",
+        "name": "permission.case_review.name",
+        "permissions": [
+          {
+            "id": "CASE_REVIEW:READ"
+          },
+          {
+            "id": "CASE_REVIEW:READ+ADD"
+          },
+          {
+            "id": "CASE_REVIEW:READ+UPDATE"
+          },
+          {
+            "id": "CASE_REVIEW:READ+DELETE"
+          },
+          {
+            "id": "CASE_REVIEW:READ+REVIEW",
+            "name": "permission.case_review.review"
+          },
+          {
+            "id": "CASE_REVIEW:READ+RELEVANCE",
+            "name": "permission.case_review.relevance"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "BUG",
+    "name": "permission.bug.name",
+    "type": "PROJECT",
+    "children": [
+      {
+        "id": "BUG",
+        "name": "permission.bug",
+        "permissions": [
+          {
+            "id": "PROJECT_BUG:READ"
+          },
+          {
+            "id": "PROJECT_BUG:READ+ADD"
+          },
+          {
+            "id": "PROJECT_BUG:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_BUG:READ+DELETE",
+            "name": "permission.api_definition.delete_and_recover"
+          },
+          {
+            "id": "PROJECT_BUG:READ+EXPORT"
+          },
+          {
+            "id": "PROJECT_BUG:READ+COMMENT",
+            "name": "permission.functional_case.comment"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "API_TEST",
+    "name": "permission.api_test.name",
+    "type": "PROJECT",
+    "children": [
+      {
+        "id": "PROJECT_API_DEBUG",
+        "name": "permission.api_debug.name",
+        "permissions": [
+          {
+            "id": "PROJECT_API_DEBUG:READ"
+          },
+          {
+            "id": "PROJECT_API_DEBUG:READ+ADD"
+          },
+          {
+            "id": "PROJECT_API_DEBUG:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_API_DEBUG:READ+DELETE"
+          },
+          {
+            "id": "PROJECT_API_DEBUG:READ+IMPORT"
+          },
+          {
+            "id": "PROJECT_API_DEBUG:READ+EXECUTE"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_API_DEFINITION",
+        "name": "permission.api_definition.name",
+        "permissions": [
+          {
+            "id": "PROJECT_API_DEFINITION:READ"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION:READ+ADD"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION:READ+DELETE",
+            "name": "permission.api_definition.delete_and_recover"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION:READ+IMPORT"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION:READ+EXECUTE"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION:READ+EXPORT"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_API_DEFINITION_CASE",
+        "name": "permission.api_case.name",
+        "permissions": [
+          {
+            "id": "PROJECT_API_DEFINITION_CASE:READ"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION_CASE:READ+ADD"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION_CASE:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION_CASE:READ+DELETE",
+            "name": "permission.api_definition.delete_and_recover"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION_CASE:READ+EXECUTE"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_API_DEFINITION_MOCK",
+        "name": "permission.api_mock.name",
+        "permissions": [
+          {
+            "id": "PROJECT_API_DEFINITION_MOCK:READ"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION_MOCK:READ+ADD"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION_MOCK:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION_MOCK:READ+DELETE"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_API_DEFINITION_DOC",
+        "name": "permission.api_doc.name",
+        "permissions": [
+          {
+            "id": "PROJECT_API_DEFINITION_DOC:READ"
+          },
+          {
+            "id": "PROJECT_API_DEFINITION_DOC:READ+SHARE",
+            "name": "permission.api_doc.share"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_API_SCENARIO",
+        "name": "message.api_scenario_task",
+        "permissions": [
+          {
+            "id": "PROJECT_API_SCENARIO:READ"
+          },
+          {
+            "id": "PROJECT_API_SCENARIO:READ+ADD"
+          },
+          {
+            "id": "PROJECT_API_SCENARIO:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_API_SCENARIO:READ+DELETE",
+            "name": "permission.api_definition.delete_and_recover"
+          },
+          {
+            "id": "PROJECT_API_SCENARIO:READ+EXECUTE"
+          },
+          {
+            "id": "PROJECT_API_SCENARIO:READ+IMPORT"
+          },
+          {
+            "id": "PROJECT_API_SCENARIO:READ+EXPORT"
+          }
+        ]
+      },
+      {
+        "id": "PROJECT_API_REPORT",
+        "name": "permission.api_report",
+        "permissions": [
+          {
+            "id": "PROJECT_API_REPORT:READ"
+          },
+          {
+            "id": "PROJECT_API_REPORT:READ+UPDATE"
+          },
+          {
+            "id": "PROJECT_API_REPORT:READ+DELETE"
+          },
+          {
+            "id": "PROJECT_API_REPORT:READ+SHARE",
+            "name": "permission.api_doc.share"
+          }
+        ]
+      }
+    ]
+  }
+]
