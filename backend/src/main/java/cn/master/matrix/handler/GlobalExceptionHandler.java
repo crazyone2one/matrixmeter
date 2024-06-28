@@ -44,8 +44,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ResultHandler> handleException(Exception e) {
         if (e instanceof AccessDeniedException) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    //.body(ResultHandler.error(MmHttpResultCode.FORBIDDEN.getCode(), MmHttpResultCode.FORBIDDEN.getMessage(), getStackTraceAsString(e)));
-                    .body(ResultHandler.error(MmHttpResultCode.FORBIDDEN.getCode(), e.getMessage(), getStackTraceAsString(e)));
+                    .body(ResultHandler.error(MmHttpResultCode.FORBIDDEN.getCode(), MmHttpResultCode.FORBIDDEN.getMessage(), getStackTraceAsString(e)));
+            //.body(ResultHandler.error(MmHttpResultCode.FORBIDDEN.getCode(), e.getMessage(), getStackTraceAsString(e)));
         }
         return ResponseEntity.internalServerError()
                 .body(ResultHandler.error(MmHttpResultCode.FAILED.getCode(), e.getCause().getMessage(), getStackTraceAsString(e)));
