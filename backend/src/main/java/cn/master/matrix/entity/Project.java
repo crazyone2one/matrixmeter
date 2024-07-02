@@ -5,6 +5,7 @@ import cn.master.matrix.handler.validation.Updated;
 import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.Table;
+import com.mybatisflex.core.handler.JacksonTypeHandler;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -16,6 +17,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 项目 实体类。
@@ -119,6 +121,7 @@ public class Project implements Serializable {
      * 模块设置
      */
     @Schema(description = "模块设置")
-    private String moduleSetting;
+    @Column(typeHandler = JacksonTypeHandler.class)
+    private List<String> moduleSetting;
 
 }

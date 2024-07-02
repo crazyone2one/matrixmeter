@@ -78,7 +78,9 @@ public class JsonUtils {
             throw new RuntimeException(e);
         }
     }
-
+    public static List parseArray(String content) {
+        return parseArray(content, Object.class);
+    }
     public static <T> List<T> parseArray(String content, TypeReference<T> valueType) {
         try {
             JavaType subType = TYPE_FACTORY.constructType(valueType);

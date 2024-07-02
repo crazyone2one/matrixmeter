@@ -1,11 +1,13 @@
 package cn.master.matrix.service;
 
+import cn.master.matrix.constants.TemplateScopeType;
 import cn.master.matrix.entity.CustomFieldOption;
 import cn.master.matrix.payload.dto.CustomFieldDTO;
 import cn.master.matrix.payload.dto.request.CustomFieldOptionRequest;
 import com.mybatisflex.core.service.IService;
 import cn.master.matrix.entity.CustomField;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -36,4 +38,12 @@ public interface BaseCustomFieldService extends IService<CustomField> {
     List<CustomFieldDTO> list(String orgId, String scene);
 
     List<CustomField> getByScopeIdAndScene(String scopeId, String scene);
+
+    List<CustomField> getByRefIdsAndScopeId(List<String> fieldIds, String scopeId);
+
+    List<CustomField> getByIds(List<String> ids);
+
+    List<CustomField> initFunctionalDefaultCustomField(TemplateScopeType scopeType, String scopeId);
+
+    List<CustomField> initBugDefaultCustomField(TemplateScopeType scopeType, String scopeId);
 }

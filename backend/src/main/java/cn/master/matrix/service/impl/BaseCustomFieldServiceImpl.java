@@ -1,8 +1,6 @@
 package cn.master.matrix.service.impl;
 
-import cn.master.matrix.constants.CustomFieldType;
-import cn.master.matrix.constants.TemplateRequiredCustomField;
-import cn.master.matrix.constants.TemplateScene;
+import cn.master.matrix.constants.*;
 import cn.master.matrix.entity.CustomField;
 import cn.master.matrix.entity.CustomFieldOption;
 import cn.master.matrix.entity.TemplateCustomField;
@@ -43,7 +41,7 @@ import static cn.master.matrix.exception.CommonResultCode.TEMPLATE_SCENE_ILLEGAL
  * @author 11's papa
  * @since 1.0.0 2024-07-02T11:44:33.956260700
  */
-@Service
+@Service("baseCustomFieldService")
 @RequiredArgsConstructor
 public class BaseCustomFieldServiceImpl extends ServiceImpl<CustomFieldMapper, CustomField> implements BaseCustomFieldService {
     private final BaseOrganizationParameterService baseOrganizationParameterService;
@@ -192,6 +190,66 @@ public class BaseCustomFieldServiceImpl extends ServiceImpl<CustomFieldMapper, C
     @Override
     public List<CustomField> getByScopeIdAndScene(String scopeId, String scene) {
         return queryChain().where(CUSTOM_FIELD.SCOPE_ID.eq(scopeId).and(CUSTOM_FIELD.SCENE.eq(scene))).list();
+    }
+
+    @Override
+    public List<CustomField> getByRefIdsAndScopeId(List<String> fieldIds, String scopeId) {
+        if (CollectionUtils.isEmpty(fieldIds)) {
+            return List.of();
+        }
+        return queryChain().where(CUSTOM_FIELD.REF_ID.in(fieldIds)
+                .and(CUSTOM_FIELD.SCOPE_ID.eq(scopeId))).list();
+    }
+
+    @Override
+    public List<CustomField> getByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return List.of();
+        }
+        return queryChain().where(CUSTOM_FIELD.ID.in(ids)).list();
+    }
+
+    @Override
+    public List<CustomField> initFunctionalDefaultCustomField(TemplateScopeType scopeType, String scopeId) {
+        List<CustomField> customFields = new ArrayList<>();
+        for (DefaultFunctionalCustomField defaultFunctionalCustomField : DefaultFunctionalCustomField.values()) {
+            CustomField customField = new CustomField();
+            customField.setName(defaultFunctionalCustomField.getName());
+            customField.setScene(TemplateScene.FUNCTIONAL.name());
+            customField.setType(defaultFunctionalCustomField.getType().name());
+            customField.setScopeType(scopeType.name());
+            customField.setScopeId(scopeId);
+            customField.setEnableOptionKey(false);
+            customFields.add(this.initDefaultCustomField(customField));
+            // 初始化选项
+            baseCustomFieldOptionService.addByFieldId(customField.getId(), defaultFunctionalCustomField.getOptions());
+        }
+        return customFields;
+    }
+
+    @Override
+    public List<CustomField> initBugDefaultCustomField(TemplateScopeType scopeType, String scopeId) {
+        List<CustomField> customFields = new ArrayList<>();
+        for (DefaultBugCustomField defaultBugCustomField : DefaultBugCustomField.values()) {
+            CustomField customField = new CustomField();
+            customField.setName(defaultBugCustomField.getName());
+            customField.setScene(TemplateScene.BUG.name());
+            customField.setType(defaultBugCustomField.getType().name());
+            customField.setScopeType(scopeType.name());
+            customField.setScopeId(scopeId);
+            customField.setEnableOptionKey(false);
+            customFields.add(this.initDefaultCustomField(customField));
+            // 初始化选项
+            baseCustomFieldOptionService.addByFieldId(customField.getId(), defaultBugCustomField.getOptions());
+        }
+        return customFields;
+    }
+
+    private CustomField initDefaultCustomField(CustomField customField) {
+        customField.setInternal(true);
+        customField.setCreateUser("admin");
+        mapper.insert(customField);
+        return customField;
     }
 
     private void checkScene(String scene) {
