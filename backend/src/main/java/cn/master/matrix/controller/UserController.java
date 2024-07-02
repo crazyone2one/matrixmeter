@@ -1,19 +1,42 @@
 package cn.master.matrix.controller;
 
+import cn.master.matrix.constants.OperationLogType;
+import cn.master.matrix.constants.PermissionConstants;
+import cn.master.matrix.constants.UserSource;
+import cn.master.matrix.entity.Organization;
+import cn.master.matrix.entity.Project;
+import cn.master.matrix.handler.annotation.HasAnyAuthorize;
+import cn.master.matrix.handler.annotation.HasAuthorize;
+import cn.master.matrix.handler.annotation.Log;
+import cn.master.matrix.handler.validation.Created;
+import cn.master.matrix.handler.validation.Updated;
+import cn.master.matrix.payload.dto.BaseTreeNode;
+import cn.master.matrix.payload.dto.OptionDTO;
+import cn.master.matrix.payload.dto.TableBatchProcessDTO;
+import cn.master.matrix.payload.dto.request.BasePageRequest;
+import cn.master.matrix.payload.dto.request.OrganizationMemberBatchRequest;
+import cn.master.matrix.payload.dto.request.ProjectAddMemberBatchRequest;
+import cn.master.matrix.payload.dto.request.user.UserCreateRequest;
+import cn.master.matrix.payload.dto.request.user.UserEditRequest;
+import cn.master.matrix.payload.dto.request.user.UserRoleBatchRelationRequest;
+import cn.master.matrix.payload.dto.user.UserDTO;
+import cn.master.matrix.payload.dto.user.UserTableResponse;
+import cn.master.matrix.payload.dto.user.response.UserBatchCreateResponse;
+import cn.master.matrix.payload.dto.user.response.UserSelectOption;
+import cn.master.matrix.payload.response.TableBatchProcessResponse;
+import cn.master.matrix.service.*;
+import cn.master.matrix.service.log.UserLogService;
+import cn.master.matrix.util.SessionUtils;
+import cn.master.matrix.util.TreeNodeParseUtils;
 import com.mybatisflex.core.paginate.Page;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.beans.factory.annotation.Autowired;
-import cn.master.matrix.entity.User;
-import cn.master.matrix.service.UserService;
-import org.springframework.web.bind.annotation.RestController;
-import java.io.Serializable;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
+import java.util.Map;
 
 /**
  * 用户 控制层。
@@ -22,75 +45,111 @@ import java.util.List;
  * @since 1.0.0 2024-06-21T10:54:08.016115500
  */
 @RestController
-@RequestMapping("/user")
+@Tag(name = "系统设置-系统-用户")
+@RequestMapping("/system/user")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final GlobalUserRoleService globalUserRoleService;
+    private final OrganizationService organizationService;
+    private final GlobalUserRoleRelationService globalUserRoleRelationService;
+    private final UserLogService userLogService;
+    private final SystemProjectService systemProjectService;
+    private final UserToolService userToolService;
 
-    /**
-     * 添加用户。
-     *
-     * @param user 用户
-     * @return {@code true} 添加成功，{@code false} 添加失败
-     */
-    @PostMapping("save")
-    public boolean save(@RequestBody User user) {
-        return userService.save(user);
+    @PostMapping("/add")
+    @Operation(summary = "系统设置-系统-用户-添加用户")
+    @HasAuthorize(PermissionConstants.SYSTEM_USER_ADD)
+    public UserBatchCreateResponse save(@Validated({Created.class}) @RequestBody UserCreateRequest userCreateDTO) {
+        return userService.save(userCreateDTO, UserSource.LOCAL.name(), SessionUtils.getUserId());
     }
 
-    /**
-     * 根据主键删除用户。
-     *
-     * @param id 主键
-     * @return {@code true} 删除成功，{@code false} 删除失败
-     */
-    @DeleteMapping("remove/{id}")
-    public boolean remove(@PathVariable Serializable id) {
-        return userService.removeById(id);
+    @PostMapping("/delete")
+    @HasAuthorize("SYSTEM_USER:READ+DELETE")
+    @Operation(summary = "系统设置-系统-用户-删除用户")
+    @Log(type = OperationLogType.DELETE, expression = "#mmClass.deleteLog(#request)", mmClass = UserLogService.class)
+    public TableBatchProcessResponse remove(@Validated @RequestBody TableBatchProcessDTO request) {
+        return userService.deleteUser(request, SessionUtils.getUserId(), SessionUtils.getUser().getUsername());
     }
 
-    /**
-     * 根据主键更新用户。
-     *
-     * @param user 用户
-     * @return {@code true} 更新成功，{@code false} 更新失败
-     */
-    @PutMapping("update")
-    public boolean update(@RequestBody User user) {
-        return userService.updateById(user);
+    @PostMapping("/update")
+    @Operation(summary = "系统设置-系统-用户-修改用户")
+    @HasAuthorize("SYSTEM_USER:READ+UPDATE")
+    @Log(type = OperationLogType.UPDATE, expression = "#mmClass.updateLog(#request)", mmClass = UserLogService.class)
+    public UserEditRequest update(@Validated({Updated.class}) @RequestBody UserEditRequest request) {
+        return userService.updateUser(request, SessionUtils.getUserId());
     }
 
-    /**
-     * 查询所有用户。
-     *
-     * @return 所有数据
-     */
-    @GetMapping("list")
-    public List<User> list() {
-        return userService.list();
+    @GetMapping("/get/global/system/role")
+    @Operation(summary = "系统设置-系统-用户-查找系统级用户组")
+    @HasAuthorize(PermissionConstants.SYSTEM_USER_ROLE_READ)
+    public List<UserSelectOption> getGlobalSystemRole() {
+        return globalUserRoleService.getGlobalSystemRoleList();
     }
 
-    /**
-     * 根据用户主键获取详细信息。
-     *
-     * @param id 用户主键
-     * @return 用户详情
-     */
-    @GetMapping("getInfo/{id}")
-    public User getInfo(@PathVariable Serializable id) {
-        return userService.getById(id);
+
+    @GetMapping("getInfo/{keyword}")
+    @HasAuthorize("SYSTEM_USER:READ")
+    @Operation(summary = "通过email或id查找用户")
+    public UserDTO getInfo(@PathVariable String keyword) {
+        return userService.getUserByKeyword(keyword);
     }
 
-    /**
-     * 分页查询用户。
-     *
-     * @param page 分页对象
-     * @return 分页对象
-     */
-    @GetMapping("page")
-    public Page<User> page(Page<User> page) {
-        return userService.page(page);
+    @PostMapping("/page")
+    @HasAuthorize("SYSTEM_USER:READ")
+    @Operation(summary = "系统设置-系统-用户-分页查找用户")
+    public Page<UserTableResponse> page(@Validated @RequestBody BasePageRequest request) {
+        return userService.page(request);
     }
 
+    @GetMapping("/get/organization")
+    @Operation(summary = "系统设置-系统-用户-用户批量操作-查找组织")
+    @HasAnyAuthorize(authorities = {PermissionConstants.SYSTEM_USER_ROLE_READ, PermissionConstants.SYSTEM_ORGANIZATION_PROJECT_READ})
+    public List<OptionDTO> getOrganization() {
+        return organizationService.listAll();
+    }
+
+    @GetMapping("/get/project")
+    @Operation(summary = "系统设置-系统-用户-用户批量操作-查找项目")
+    @HasAnyAuthorize(authorities = {PermissionConstants.SYSTEM_USER_ROLE_READ, PermissionConstants.SYSTEM_ORGANIZATION_PROJECT_READ})
+    public List<BaseTreeNode> getProject() {
+        Map<Organization, List<Project>> orgProjectMap = organizationService.getOrgProjectMap();
+        return TreeNodeParseUtils.parseOrgProjectMap(orgProjectMap);
+    }
+
+    @PostMapping("/add/batch/user-role")
+    @Operation(summary = "系统设置-系统-用户-批量添加用户到多个用户组中")
+    @HasAuthorize(PermissionConstants.SYSTEM_USER_UPDATE)
+    public TableBatchProcessResponse batchAddUserGroupRole(@Validated({Created.class}) @RequestBody UserRoleBatchRelationRequest request) {
+        TableBatchProcessResponse returnResponse = globalUserRoleRelationService.batchAdd(request, SessionUtils.getUserId());
+        userLogService.batchAddUserRoleLog(request, SessionUtils.getUserId());
+        return returnResponse;
+    }
+
+    @PostMapping("/add-project-member")
+    @Operation(summary = "系统设置-系统-用户-批量添加用户到项目")
+    @HasAnyAuthorize(authorities = {PermissionConstants.SYSTEM_USER_UPDATE, PermissionConstants.SYSTEM_ORGANIZATION_PROJECT_MEMBER_ADD})
+    public TableBatchProcessResponse addProjectMember(@Validated @RequestBody UserRoleBatchRelationRequest userRoleBatchRelationRequest) {
+        ProjectAddMemberBatchRequest request = new ProjectAddMemberBatchRequest();
+        request.setProjectIds(userRoleBatchRelationRequest.getRoleIds());
+        request.setUserIds(userRoleBatchRelationRequest.getSelectIds());
+        systemProjectService.addProjectMember(request, SessionUtils.getUserId());
+        userLogService.batchAddProjectLog(userRoleBatchRelationRequest, SessionUtils.getUserId());
+        return new TableBatchProcessResponse(userRoleBatchRelationRequest.getSelectIds().size(), userRoleBatchRelationRequest.getSelectIds().size());
+    }
+
+    @PostMapping("/add-org-member")
+    @Operation(summary = "系统设置-系统-用户-批量添加用户到组织")
+    @HasAnyAuthorize(authorities = {PermissionConstants.SYSTEM_USER_UPDATE, PermissionConstants.SYSTEM_ORGANIZATION_PROJECT_MEMBER_ADD})
+    public TableBatchProcessResponse addMember(@Validated @RequestBody UserRoleBatchRelationRequest userRoleBatchRelationRequest) {
+        //获取本次处理的用户
+        userRoleBatchRelationRequest.setSelectIds(userToolService.getBatchUserIds(userRoleBatchRelationRequest));
+        OrganizationMemberBatchRequest request = new OrganizationMemberBatchRequest();
+        request.setOrganizationIds(userRoleBatchRelationRequest.getRoleIds());
+        request.setUserIds(userRoleBatchRelationRequest.getSelectIds());
+        organizationService.addMemberBySystem(request, SessionUtils.getUserId());
+        userLogService.batchAddOrgLog(userRoleBatchRelationRequest, SessionUtils.getUserId());
+        return new TableBatchProcessResponse(userRoleBatchRelationRequest.getSelectIds().size(), userRoleBatchRelationRequest.getSelectIds().size());
+    }
 }

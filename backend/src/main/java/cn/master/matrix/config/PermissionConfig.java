@@ -1,13 +1,12 @@
 package cn.master.matrix.config;
 
-import cn.master.matrix.entity.dto.permission.PermissionDefinitionItem;
+import cn.master.matrix.payload.dto.permission.PermissionDefinitionItem;
 import cn.master.matrix.util.JsonUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
@@ -16,10 +15,10 @@ import java.util.List;
 /**
  * @author Created by 11's papa on 06/27/2024
  **/
-//@Configuration
+@Configuration
 public class PermissionConfig {
     @Bean
-    public PermissionCache permissionCache() throws IOException {
+    public PermissionCache permissionCache() throws Exception {
         List<PermissionDefinitionItem> permissionDefinition = null;
         Enumeration<URL> urls = this.getClass().getClassLoader().getResources("permission.json");
         while (urls.hasMoreElements()) {

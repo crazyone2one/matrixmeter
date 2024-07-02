@@ -1,5 +1,6 @@
 package cn.master.matrix.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Created by 11's papa on 06/27/2024
@@ -101,6 +103,14 @@ public class JsonUtils {
             return OBJECT_MAPPER.readTree(text);
         } catch (IOException e) {
             log.error("json parse err,json:{}", text, e);
+            throw new RuntimeException(e);
+        }
+    }
+    public static Map parseMap(String jsonObject) {
+        try {
+            return OBJECT_MAPPER.readValue(jsonObject, new TypeReference<>() {
+            });
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }

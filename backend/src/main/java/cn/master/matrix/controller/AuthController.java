@@ -9,6 +9,7 @@ import cn.master.matrix.payload.response.JwtResponse;
 import cn.master.matrix.security.JwtProvider;
 import cn.master.matrix.security.UserPrinciple;
 import cn.master.matrix.service.UserKeyService;
+import cn.master.matrix.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,15 +23,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Created by 11's papa on 06/21/2024
@@ -45,6 +43,7 @@ public class AuthController {
     private final JwtProvider jwtProvider;
     private final UserKeyMapper userKeyMapper;
     private final UserKeyService userKeyService;
+    private final UserService userService;
 
     @PostMapping("/signin")
     @Operation(summary = "使用账号密码登录")
@@ -56,16 +55,9 @@ public class AuthController {
         val token = jwtProvider.generateAccessToken(authentication);
         val refreshToken = jwtProvider.generateRefreshToken(authentication);
         UserPrinciple userDetails = (UserPrinciple) authentication.getPrincipal();
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
         revokeAllTokenByUser(userDetails);
         saveUserToken(token, refreshToken, userDetails);
-        return ResponseEntity.ok(new JwtResponse(token, refreshToken,
-                userDetails.getUser().getId(),
-                userDetails.getUsername(),
-                userDetails.getUser().getEmail(),
-                roles));
+        return ResponseEntity.ok(new JwtResponse(token, refreshToken, userService.getUserDTO(userDetails.getUser().getId())));
     }
 
     private void saveUserToken(String accessToken, String refreshToken, UserPrinciple userDetails) {
@@ -85,14 +77,7 @@ public class AuthController {
             val principal = (UserPrinciple) authentication.getPrincipal();
             revokeAllTokenByUser(principal);
             saveUserToken(accessToken, refreshToken, principal);
-            List<String> roles = principal.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .collect(Collectors.toList());
-            val jwtResponse = new JwtResponse(accessToken, refreshToken,
-                    principal.getUser().getId(),
-                    principal.getUsername(),
-                    principal.getUser().getEmail(),
-                    roles);
+            val jwtResponse = new JwtResponse(accessToken, refreshToken, userService.getUserDTO(principal.getUser().getId()));
             new ObjectMapper().writeValue(response.getOutputStream(), jwtResponse);
         }
     }

@@ -1,6 +1,6 @@
 package cn.master.matrix.config;
 
-import cn.master.matrix.entity.dto.permission.PermissionDefinitionItem;
+import cn.master.matrix.payload.dto.permission.PermissionDefinitionItem;
 import lombok.Data;
 
 import java.util.List;

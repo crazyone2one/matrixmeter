@@ -21,6 +21,8 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-test-query: SELECT 1
+  messages:
+    basename: i18n/api,i18n/bug,i18n/case,i18n/commons,i18n/plan,i18n/project,i18n/system
 matrix:
   meter:
     jwt:

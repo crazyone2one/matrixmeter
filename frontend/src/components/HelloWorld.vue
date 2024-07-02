@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-
-defineProps<{ msg: string }>()
-
-const count = ref(0)
+import { ref } from "vue";
+defineProps<{ msg: string }>();
+const count = ref(0);
+const loading = ref(false);
+const handleLoading = () => {
+  loading.value = true;
+  setTimeout(() => {
+    loading.value = false;
+  }, 2000);
+};
 </script>
 
 <template>
+  <div v-loading="loading" />
   <h1>{{ msg }}</h1>
-
+  <button type="button" @click="handleLoading">show loading</button>
   <div class="card">
     <button type="button" @click="count++">count is {{ count }}</button>
     <p>

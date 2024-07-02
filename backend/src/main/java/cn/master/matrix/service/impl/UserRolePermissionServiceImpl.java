@@ -3,14 +3,17 @@ package cn.master.matrix.service.impl;
 import cn.master.matrix.entity.UserRole;
 import cn.master.matrix.entity.UserRolePermission;
 import cn.master.matrix.entity.UserRoleRelation;
-import cn.master.matrix.entity.dto.user.UserRolePermissionDTO;
-import cn.master.matrix.entity.dto.user.UserRoleResourceDTO;
 import cn.master.matrix.mapper.UserRolePermissionMapper;
+import cn.master.matrix.payload.dto.request.PermissionSettingUpdateRequest;
+import cn.master.matrix.payload.dto.user.UserRolePermissionDTO;
+import cn.master.matrix.payload.dto.user.UserRoleResourceDTO;
 import cn.master.matrix.service.UserRolePermissionService;
+import com.mybatisflex.core.logicdelete.LogicDeleteManager;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.val;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 用户组权限 服务层实现。
@@ -60,5 +65,42 @@ public class UserRolePermissionServiceImpl extends ServiceImpl<UserRolePermissio
         val userRolePermissions = QueryChain.of(UserRolePermission.class).where(UserRolePermission::getRoleId).in(authorities).list();
         val list = userRolePermissions.stream().map(UserRolePermission::getPermissionId).toList().stream().distinct().toList();
         return Arrays.stream(permissions).anyMatch(list::contains);
+    }
+
+    @Override
+    public Set<String> getPermissionIdSetByRoleId(String roleId) {
+        return getByRoleId(roleId).stream()
+                .map(UserRolePermission::getPermissionId)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public List<UserRolePermission> getByRoleId(String roleId) {
+        return queryChain().where(UserRolePermission::getRoleId).eq(roleId).list();
+    }
+
+    @Override
+    public void updatePermissionSetting(PermissionSettingUpdateRequest request) {
+        List<PermissionSettingUpdateRequest.PermissionUpdateRequest> permissions = request.getPermissions();
+        // 先删除
+        val queryChain = queryChain().where(UserRolePermission::getRoleId).eq(request.getUserRoleId());
+        LogicDeleteManager.execWithoutLogicDelete(() -> mapper.deleteByQuery(queryChain));
+        // 再新增
+        String groupId = request.getUserRoleId();
+        permissions.forEach(permission -> {
+            if (BooleanUtils.isTrue(permission.getEnable())) {
+                String permissionId = permission.getId();
+                UserRolePermission groupPermission = new UserRolePermission();
+                groupPermission.setRoleId(groupId);
+                groupPermission.setPermissionId(permissionId);
+                mapper.insert(groupPermission);
+            }
+        });
+    }
+
+    @Override
+    public void deleteByRoleId(String roleId) {
+        val queryChain = queryChain().where(UserRolePermission::getRoleId).eq(roleId);
+        LogicDeleteManager.execWithoutLogicDelete(() -> mapper.deleteByQuery(queryChain));
     }
 }

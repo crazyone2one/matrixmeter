@@ -1,7 +1,12 @@
 package cn.master.matrix.handler;
 
+import cn.master.matrix.exception.CustomException;
+import cn.master.matrix.exception.IResultCode;
 import cn.master.matrix.handler.result.MmHttpResultCode;
+import cn.master.matrix.util.ServiceUtils;
+import cn.master.matrix.util.Translator;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -38,6 +43,43 @@ public class GlobalExceptionHandler {
     public ResultHandler handleHttpRequestMethodNotSupportedException(HttpServletResponse response, Exception exception) {
         response.setStatus(HttpStatus.METHOD_NOT_ALLOWED.value());
         return ResultHandler.error(HttpStatus.METHOD_NOT_ALLOWED.value(), exception.getMessage());
+    }
+
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<ResultHandler> handleCustomException(CustomException e) {
+        IResultCode errorCode = e.getErrorCode();
+        if (errorCode == null) {
+            // 如果抛出异常没有设置状态码，则返回错误 message
+            return ResponseEntity.internalServerError()
+                    .body(ResultHandler.error(MmHttpResultCode.FAILED.getCode(), e.getMessage()));
+        }
+        int code = errorCode.getCode();
+        String message = errorCode.getMessage();
+        message = Translator.get(message, message);
+
+        if (errorCode instanceof MmHttpResultCode) {
+            // 如果是 MsHttpResultCode，则设置响应的状态码，取状态码的后三位
+            if (errorCode.equals(MmHttpResultCode.NOT_FOUND)) {
+                message = getNotFoundMessage(message);
+            }
+            return ResponseEntity.status(code % 1000)
+                    .body(ResultHandler.error(code, message, e.getMessage()));
+        } else {
+            // 响应码返回 500，设置业务状态码
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResultHandler.error(code, Translator.get(message, message), e.getMessage()));
+        }
+    }
+
+    private String getNotFoundMessage(String message) {
+        String resourceName = ServiceUtils.getResourceName();
+        if (StringUtils.isNotBlank(resourceName)) {
+            message = String.format(message, Translator.get(resourceName, resourceName));
+        } else {
+            message = String.format(message, Translator.get("resource.name"));
+        }
+        ServiceUtils.clearResourceName();
+        return message;
     }
 
     @ExceptionHandler({Exception.class})
