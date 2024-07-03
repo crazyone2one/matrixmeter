@@ -2,6 +2,7 @@ package cn.master.matrix.service;
 
 import cn.master.matrix.payload.dto.permission.PermissionDefinitionItem;
 import cn.master.matrix.payload.dto.request.PermissionSettingUpdateRequest;
+import cn.master.matrix.payload.dto.user.UserExtendDTO;
 import com.mybatisflex.core.service.IService;
 import cn.master.matrix.entity.UserRole;
 
@@ -31,4 +32,10 @@ public interface BaseUserRoleService extends IService<UserRole> {
     UserRole update(UserRole userRole);
 
     void delete(UserRole userRole, String value, String userId, String system);
+
+    UserRole get(String id);
+
+    List<UserExtendDTO> getMember(String sourceId, String roleId, String keyword);
+
+    void checkMemberParam(String userId, String roleId);
 }

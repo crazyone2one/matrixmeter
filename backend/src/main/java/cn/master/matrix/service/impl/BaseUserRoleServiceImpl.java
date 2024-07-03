@@ -2,6 +2,7 @@ package cn.master.matrix.service.impl;
 
 import cn.master.matrix.config.PermissionCache;
 import cn.master.matrix.constants.InternalUserRole;
+import cn.master.matrix.entity.User;
 import cn.master.matrix.entity.UserRole;
 import cn.master.matrix.entity.UserRoleRelation;
 import cn.master.matrix.exception.CustomException;
@@ -9,6 +10,7 @@ import cn.master.matrix.mapper.UserRoleMapper;
 import cn.master.matrix.payload.dto.permission.Permission;
 import cn.master.matrix.payload.dto.permission.PermissionDefinitionItem;
 import cn.master.matrix.payload.dto.request.PermissionSettingUpdateRequest;
+import cn.master.matrix.payload.dto.user.UserExtendDTO;
 import cn.master.matrix.service.BaseUserRoleRelationService;
 import cn.master.matrix.service.BaseUserRoleService;
 import cn.master.matrix.service.UserRolePermissionService;
@@ -16,16 +18,20 @@ import cn.master.matrix.util.JsonUtils;
 import cn.master.matrix.util.ServiceUtils;
 import cn.master.matrix.util.Translator;
 import com.mybatisflex.core.logicdelete.LogicDeleteManager;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.master.matrix.entity.table.UserTableDef.USER;
 import static cn.master.matrix.exception.CommonResultCode.ADMIN_USER_ROLE_PERMISSION;
 import static cn.master.matrix.exception.CommonResultCode.INTERNAL_USER_ROLE_PERMISSION;
 
@@ -41,7 +47,7 @@ public class BaseUserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRol
 
     private final UserRolePermissionService userRolePermissionService;
     private final PermissionCache permissionCache;
-    private final BaseUserRoleRelationService baseUserRoleRelationService;
+    final BaseUserRoleRelationService baseUserRoleRelationService;
 
     @Override
     public UserRole getWithCheck(String id) {
@@ -164,6 +170,63 @@ public class BaseUserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRol
         checkOneLimitRole(id, defaultRoleId, userId, orgId);
         // 删除用户组与用户的关联关系
         baseUserRoleRelationService.deleteByRoleId(id);
+    }
+
+    @Override
+    public UserRole get(String id) {
+        return mapper.selectOneById(id);
+    }
+
+    @Override
+    public List<UserExtendDTO> getMember(String sourceId, String roleId, String keyword) {
+        List<UserExtendDTO> userExtends = new ArrayList<>();
+        // 查询用户组关联的用户ID
+        val userRoleRelations = QueryChain.of(UserRoleRelation.class).where(UserRoleRelation::getSourceId).eq(sourceId).list();
+        if (CollectionUtils.isNotEmpty(userRoleRelations)) {
+            Map<String, List<String>> userRoleMap = userRoleRelations.stream().collect(Collectors.groupingBy(UserRoleRelation::getUserId,
+                    Collectors.mapping(UserRoleRelation::getRoleId, Collectors.toList())));
+            userRoleMap.forEach((k, v) -> {
+                UserExtendDTO userExtendDTO = new UserExtendDTO();
+                userExtendDTO.setId(k);
+                v.forEach(roleItem -> {
+                    if (StringUtils.equals(roleItem, roleId)) {
+                        // 该用户已存在用户组关系, 设置为选中状态
+                        userExtendDTO.setCheckRoleFlag(true);
+                    }
+                });
+                userExtends.add(userExtendDTO);
+            });
+            // 设置用户信息, 用户不存在或者已删除, 则不展示
+            List<String> userIds = userExtends.stream().map(UserExtendDTO::getId).toList();
+            List<User> users = getRoleUserByParam(userIds, keyword);
+            if (CollectionUtils.isNotEmpty(users)) {
+                Map<String, User> userMap = users.stream().collect(Collectors.toMap(User::getId, user -> user));
+                userExtends.removeIf(userExtend -> {
+                    if (userMap.containsKey(userExtend.getId())) {
+                        BeanUtils.copyProperties(userMap.get(userExtend.getId()), userExtend);
+                        return false;
+                    }
+                    return true;
+                });
+            } else {
+                userExtends.clear();
+            }
+        }
+        userExtends.sort(Comparator.comparing(UserExtendDTO::getName));
+        return userExtends;
+    }
+
+    @Override
+    public void checkMemberParam(String userId, String roleId) {
+        QueryChain.of(User.class).where(User::getId).eq(userId).oneOpt()
+                .orElseThrow(() -> new CustomException(Translator.get("user_not_exist")));
+        queryChain().where(UserRole::getId).eq(roleId).oneOpt()
+                .orElseThrow(() -> new CustomException(Translator.get("user_role_not_exist")));
+    }
+
+    private List<User> getRoleUserByParam(List<String> userIds, String keyword) {
+        return QueryChain.of(User.class).where(User::getId).in(userIds)
+                .and(USER.NAME.like(keyword).or(USER.EMAIL.like(keyword))).list();
     }
 
     private void checkOneLimitRole(String roleId, String defaultRoleId, String userId, String orgId) {
