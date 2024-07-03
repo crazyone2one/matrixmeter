@@ -19,6 +19,7 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.query.QueryMethods;
 import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.SelectQueryTable;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -611,8 +612,8 @@ public class OrganizationServiceImpl extends ServiceImpl<OrganizationMapper, Org
                 .select("coalesce(membercount, 0) as memberCount")
                 .select("coalesce(projectcount, 0) as projectCount")
                 .from(ORGANIZATION.as("o"))
-                .leftJoin(membersGroupWrapper.as("members_group")).on("o.id = members_group.source_id")
-                .leftJoin(projectGroupWrapper.as("projects_group")).on("projects_group.organization_id")
+                .leftJoin(new SelectQueryTable(membersGroupWrapper).as("members_group")).on("o.id = members_group.source_id")
+                .leftJoin(new SelectQueryTable(projectGroupWrapper).as("projects_group")).on("projects_group.organization_id")
         ;
         return mapper.selectListByQueryAs(wrapper, OrganizationCountDTO.class);
     }
