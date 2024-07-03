@@ -482,7 +482,12 @@ public class OrganizationServiceImpl extends ServiceImpl<OrganizationMapper, Org
         checkOrgDefault(organizationDeleteRequest.getOrganizationId());
         checkOrganizationNotExist(organizationDeleteRequest.getOrganizationId());
         organizationDeleteRequest.setDeleteTime(LocalDateTime.now());
-        mapper.deleteById(organizationDeleteRequest);
+        //mapper.deleteById(organizationDeleteRequest);
+        updateChain().set(ORGANIZATION.DELETE_TIME, System.currentTimeMillis())
+                .set(ORGANIZATION.DELETE_USER, organizationDeleteRequest.getDeleteUserId())
+                .set(ORGANIZATION.DELETED, true)
+                .where(ORGANIZATION.ID.eq(organizationDeleteRequest.getOrganizationId()))
+                .update();
     }
 
     @Override

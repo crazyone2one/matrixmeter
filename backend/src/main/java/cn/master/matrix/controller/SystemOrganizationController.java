@@ -74,7 +74,7 @@ public class SystemOrganizationController {
     @GetMapping("/delete/{id}")
     @Operation(summary = "系统设置-系统-组织与项目-组织-删除组织")
     @Parameter(name = "id", description = "组织ID", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED))
-    @HasAuthorize(PermissionConstants.SYSTEM_ORGANIZATION_PROJECT_READ_DELETE)
+    //@HasAuthorize(PermissionConstants.SYSTEM_ORGANIZATION_PROJECT_READ_DELETE)
     @Log(type = OperationLogType.DELETE, expression = "#mmClass.deleteLog(#id)", mmClass = SystemOrganizationLogService.class)
     public void delete(@PathVariable String id) {
         OrganizationDeleteRequest organizationDeleteRequest = new OrganizationDeleteRequest();
