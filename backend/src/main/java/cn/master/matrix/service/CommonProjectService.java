@@ -39,4 +39,6 @@ public interface CommonProjectService extends IService<Project> {
     List<OptionDTO> getTestResourcePoolOptions(ProjectPoolRequest request);
 
     void rename(UpdateProjectNameRequest request, String userId);
+
+    List<String> getProjectIdByOrgId(String orgId);
 }

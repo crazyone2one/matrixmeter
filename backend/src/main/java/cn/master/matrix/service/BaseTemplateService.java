@@ -1,6 +1,7 @@
 package cn.master.matrix.service;
 
 import cn.master.matrix.constants.TemplateScopeType;
+import cn.master.matrix.payload.dto.TemplateDTO;
 import cn.master.matrix.payload.dto.request.TemplateCustomFieldRequest;
 import cn.master.matrix.payload.dto.request.TemplateSystemCustomFieldRequest;
 import com.mybatisflex.core.service.IService;
@@ -33,4 +34,20 @@ public interface BaseTemplateService extends IService<Template> {
     void initUiDefaultTemplate(String scopeId, TemplateScopeType scopeType);
 
     void initTestPlanDefaultTemplate(String scopeId, TemplateScopeType scopeType);
+
+    List<Template> list(String scopeId, String scene);
+
+    List<Template> translateInternalTemplate(List<Template> templates);
+
+    String translateInternalTemplate();
+
+    Template getWithCheck(String id);
+
+    TemplateDTO getTemplateDto(Template template);
+
+    Template add(Template template, List<TemplateCustomFieldRequest> customFields, List<TemplateSystemCustomFieldRequest> systemFields);
+
+    Template update(Template template, List<TemplateCustomFieldRequest> customFields, List<TemplateSystemCustomFieldRequest> systemFields);
+
+    void delete(String id);
 }

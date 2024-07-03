@@ -2,16 +2,17 @@ package cn.master.matrix.entity;
 
 import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.RelationOneToOne;
 import com.mybatisflex.annotation.Table;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.io.Serial;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 模版 实体类。
@@ -73,6 +74,7 @@ public class Template implements Serializable {
      * 创建人
      */
     @Schema(description = "创建人")
+    @RelationOneToOne(selfField = "createUser", targetField = "id", targetTable = "user")
     private String createUser;
 
     /**

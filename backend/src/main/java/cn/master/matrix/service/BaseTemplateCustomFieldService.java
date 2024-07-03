@@ -21,4 +21,12 @@ public interface BaseTemplateCustomFieldService extends IService<TemplateCustomF
     void addCustomFieldByTemplateId(String id, List<TemplateCustomFieldRequest> customFields);
 
     void addSystemFieldByTemplateId(String id, List<TemplateCustomFieldRequest> customFieldRequests);
+
+    List<TemplateCustomField> getByTemplateId(String templateId);
+
+    void deleteByTemplateIdAndSystem(String templateId, boolean isSystem);
+
+    void deleteByTemplateIds(List<String> projectTemplateIds);
+
+    void deleteByTemplateId(String templateId);
 }

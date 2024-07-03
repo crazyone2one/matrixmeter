@@ -414,6 +414,13 @@ public class CommonProjectServiceImpl extends ServiceImpl<ProjectMapper, Project
         mapper.update(project);
     }
 
+    @Override
+    public List<String> getProjectIdByOrgId(String orgId) {
+        return queryChain().where(Project::getOrganizationId).eq(orgId).list()
+                .stream()
+                .map(Project::getId).toList();
+    }
+
     private void setLog(LogDTO dto, String path, String method, List<LogDTO> logDTOList) {
         dto.setPath(path);
         dto.setMethod(method);
