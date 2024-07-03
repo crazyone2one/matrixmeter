@@ -6,11 +6,9 @@ import cn.master.matrix.exception.CustomException;
 import cn.master.matrix.mapper.OrganizationMapper;
 import cn.master.matrix.mapper.UserMapper;
 import cn.master.matrix.mapper.UserRoleRelationMapper;
-import cn.master.matrix.payload.dto.LogDTO;
-import cn.master.matrix.payload.dto.OptionDTO;
-import cn.master.matrix.payload.dto.OptionDisabledDTO;
-import cn.master.matrix.payload.dto.OrgUserExtend;
+import cn.master.matrix.payload.dto.*;
 import cn.master.matrix.payload.dto.request.*;
+import cn.master.matrix.payload.dto.user.UserExtendDTO;
 import cn.master.matrix.service.OperationLogService;
 import cn.master.matrix.service.OrganizationService;
 import cn.master.matrix.util.JsonUtils;
@@ -19,6 +17,7 @@ import cn.master.matrix.util.Translator;
 import com.mybatisflex.core.logicdelete.LogicDeleteManager;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
+import com.mybatisflex.core.query.QueryMethods;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +28,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.master.matrix.entity.table.OrganizationTableDef.ORGANIZATION;
+import static cn.master.matrix.entity.table.ProjectTableDef.PROJECT;
 import static cn.master.matrix.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
 import static cn.master.matrix.entity.table.UserRoleTableDef.USER_ROLE;
 import static cn.master.matrix.entity.table.UserTableDef.USER;
@@ -112,6 +114,21 @@ public class OrganizationServiceImpl extends ServiceImpl<OrganizationMapper, Org
         if (CollectionUtils.isNotEmpty(userRoleRelations)) {
             userRoleRelationMapper.insertBatch(userRoleRelations);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addMemberBySystem(OrganizationMemberRequest organizationMemberRequest, String createUserId) {
+        List<LogDTO> logs = new ArrayList<>();
+        OrganizationMemberBatchRequest batchRequest = new OrganizationMemberBatchRequest();
+        batchRequest.setOrganizationIds(List.of(organizationMemberRequest.getOrganizationId()));
+        batchRequest.setUserIds(organizationMemberRequest.getUserIds());
+        addMemberBySystem(batchRequest, createUserId);
+        // 添加日志
+        List<User> users = QueryChain.of(User.class).where(USER.ID.in(batchRequest.getUserIds())).list();
+        List<String> nameList = users.stream().map(User::getName).collect(Collectors.toList());
+        setLog(organizationMemberRequest.getOrganizationId(), createUserId, OperationLogType.ADD.name(), Translator.get("add") + Translator.get("organization_member_log") + ": " + StringUtils.join(nameList, ","), ADD_MEMBER_PATH, null, null, logs);
+        operationLogService.batchAdd(logs);
     }
 
     @Override
@@ -398,6 +415,221 @@ public class OrganizationServiceImpl extends ServiceImpl<OrganizationMapper, Org
     @Override
     public Organization checkResourceExist(String id) {
         return ServiceUtils.checkResourceExist(mapper.selectOneById(id), "permission.system_organization_project.name");
+    }
+
+    @Override
+    public Page<OrganizationDTO> list(OrganizationRequest request) {
+        val queryChain = queryChain()
+                .where(ORGANIZATION.NAME.like(request.getKeyword())
+                        .or(ORGANIZATION.NUM.like(request.getKeyword())))
+                .orderBy(ORGANIZATION.CREATE_TIME.desc());
+        val page = mapper.paginateAs(Page.of(request.getPageNum(), request.getPageSize()), queryChain, OrganizationDTO.class);
+        val records = page.getRecords();
+        List<OrganizationDTO> organizations = buildOrgAdminInfo(records);
+        buildExtraInfo(organizations);
+        return page;
+    }
+
+    @Override
+    public List<String> getOrgAdminIds(String organizationId) {
+        return QueryChain.of(UserRoleRelation.class).where(USER_ROLE_RELATION.SOURCE_ID.eq(organizationId)
+                        .and(USER_ROLE_RELATION.ROLE_ID.eq(InternalUserRole.ORG_ADMIN.getValue())))
+                .list()
+                .stream().map(UserRoleRelation::getUserId).toList();
+    }
+
+    @Override
+    public void update(OrganizationDTO organizationDTO) {
+        checkOrganizationNotExist(organizationDTO.getId());
+        checkOrganizationExist(organizationDTO);
+        mapper.update(organizationDTO);
+        // 新增的组织管理员ID
+        List<String> addOrgAdmins = organizationDTO.getUserIds();
+        // 旧的组织管理员ID
+        List<String> oldOrgAdmins = getOrgAdminIds(organizationDTO.getId());
+        // 需要新增组织管理员ID
+        List<String> addIds = addOrgAdmins.stream().filter(addOrgAdmin -> !oldOrgAdmins.contains(addOrgAdmin)).toList();
+        // 需要删除的组织管理员ID
+        List<String> deleteIds = oldOrgAdmins.stream().filter(oldOrgAdmin -> !addOrgAdmins.contains(oldOrgAdmin)).toList();
+        // 添加组织管理员
+        if (CollectionUtils.isNotEmpty(addIds)) {
+            addIds.forEach(userId -> {
+                // 添加组织管理员
+                createAdmin(userId, organizationDTO.getId(), organizationDTO.getUpdateUser());
+            });
+        }
+        // 删除组织管理员
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            val queryChain = QueryChain.of(userRoleRelationMapper).where(USER_ROLE_RELATION.SOURCE_ID.eq(organizationDTO.getId())
+                    .and(USER_ROLE_RELATION.ROLE_ID.eq(InternalUserRole.ORG_ADMIN.getValue()))
+                    .and(USER_ROLE_RELATION.USER_ID.in(deleteIds)));
+            LogicDeleteManager.execWithoutLogicDelete(() -> userRoleRelationMapper.deleteByQuery(queryChain));
+        }
+    }
+
+    @Override
+    public void updateName(OrganizationDTO organizationDTO) {
+        checkOrganizationNotExist(organizationDTO.getId());
+        checkOrganizationExist(organizationDTO);
+        updateChain().set(ORGANIZATION.NAME, organizationDTO.getName())
+                .where(ORGANIZATION.ID.eq(organizationDTO.getId()))
+                .update();
+    }
+
+    @Override
+    public void delete(OrganizationDeleteRequest organizationDeleteRequest) {
+        // 默认组织不允许删除
+        checkOrgDefault(organizationDeleteRequest.getOrganizationId());
+        checkOrganizationNotExist(organizationDeleteRequest.getOrganizationId());
+        organizationDeleteRequest.setDeleteTime(LocalDateTime.now());
+        mapper.deleteById(organizationDeleteRequest);
+    }
+
+    @Override
+    public void recover(String id) {
+        checkOrganizationNotExist(id);
+        // todo
+    }
+
+    @Override
+    public void enable(String id) {
+        checkOrganizationNotExist(id);
+        updateChain().set(ORGANIZATION.ENABLE, true).where(ORGANIZATION.ID.eq(id)).update();
+    }
+
+    @Override
+    public void disable(String id) {
+        checkOrganizationNotExist(id);
+        updateChain().set(ORGANIZATION.ENABLE, false).where(ORGANIZATION.ID.eq(id)).update();
+    }
+
+    @Override
+    public Page<UserExtendDTO> getMemberListBySystem(OrganizationRequest request) {
+        QueryWrapper wrapper = new QueryWrapper();
+        QueryWrapper subWrapper = new QueryWrapper();
+        subWrapper.select(USER.ALL_COLUMNS, USER_ROLE_RELATION.ROLE_ID, USER_ROLE_RELATION.CREATE_TIME.as("memberTime"))
+                .from(USER_ROLE_RELATION).join(USER).on(USER_ROLE_RELATION.USER_ID.eq(USER.ID))
+                .where(USER_ROLE_RELATION.SOURCE_ID.eq(request.getOrganizationId()))
+                .and(USER.NAME.like(request.getKeyword())
+                        .or(USER.EMAIL.like(request.getKeyword()))
+                        .or(USER.PHONE.like(request.getKeyword())))
+                .orderBy(USER_ROLE_RELATION.CREATE_TIME.desc());
+        wrapper.select("temp.*")
+                .select("max(if(temp.role_id = 'org_admin', true, false)) as adminFlag")
+                .select("min(temp.memberTime) as groupTime")
+                .from(subWrapper.as("temp"))
+                .groupBy("temp.id")
+                .orderBy("adminFlag", "groupTime");
+        return userRoleRelationMapper.paginateAs(Page.of(request.getPageNum(), request.getPageSize()), wrapper, UserExtendDTO.class);
+    }
+
+    @Override
+    public OrganizationDTO getDefault() {
+        OrganizationDTO organizationDTO = new OrganizationDTO();
+        val one = queryChain().where(Organization::getNum).eq(100001L).one();
+        BeanUtils.copyProperties(one, organizationDTO);
+        return organizationDTO;
+    }
+
+    @Override
+    public Map<String, Long> getTotal(String organizationId) {
+        Map<String, Long> total = new HashMap<>();
+        if (StringUtils.isNotEmpty(organizationId)) {
+            total.put("projectTotal", QueryChain.of(Project.class).where(Project::getOrganizationId).eq(organizationId).count());
+            total.put("organizationTotal", 1L);
+        } else {
+            // 查询所有组织
+            total.put("projectTotal", QueryChain.of(Project.class).count());
+            total.put("organizationTotal", QueryChain.of(Organization.class).count());
+        }
+        return total;
+    }
+
+    private void checkOrgDefault(String id) {
+        Organization organization = mapper.selectOneById(id);
+        if (organization.getNum().equals(DEFAULT_ORGANIZATION_NUM)) {
+            throw new CustomException(Translator.get("default_organization_not_allow_delete"));
+        }
+    }
+
+    private void createAdmin(String memberId, String organizationId, String createUser) {
+        UserRoleRelation orgAdmin = new UserRoleRelation();
+        orgAdmin.setUserId(memberId);
+        orgAdmin.setRoleId(InternalUserRole.ORG_ADMIN.getValue());
+        orgAdmin.setSourceId(organizationId);
+        orgAdmin.setCreateUser(createUser);
+        orgAdmin.setOrganizationId(organizationId);
+        userRoleRelationMapper.insertSelective(orgAdmin);
+    }
+
+    private void checkOrganizationExist(OrganizationDTO organizationDTO) {
+        val exists = queryChain().where(Organization::getId).ne(organizationDTO.getId())
+                .and(Organization::getName).eq(organizationDTO.getName()).exists();
+        if (exists) {
+            throw new CustomException(Translator.get("organization_name_already_exists"));
+        }
+    }
+
+    private void checkOrganizationNotExist(String id) {
+        if (Objects.isNull(mapper.selectOneById(id))) {
+            throw new CustomException(Translator.get("organization_not_exist"));
+        }
+    }
+
+    private void buildExtraInfo(List<OrganizationDTO> organizations) {
+        List<String> ids = organizations.stream().map(OrganizationDTO::getId).toList();
+        List<OrganizationCountDTO> orgCountList = getCountByIds(ids);
+        Map<String, OrganizationCountDTO> orgCountMap = orgCountList.stream().collect(Collectors.toMap(OrganizationCountDTO::getId, count -> count));
+        organizations.forEach(organizationDTO -> {
+            organizationDTO.setProjectCount(orgCountMap.get(organizationDTO.getId()).getProjectCount());
+            organizationDTO.setMemberCount(orgCountMap.get(organizationDTO.getId()).getMemberCount());
+            //if (BooleanUtils.isTrue(organizationDTO.getDeleted())) {
+            //    organizationDTO.setRemainDayCount(getDeleteRemainDays(organizationDTO.getDeleteTime()));
+            //}
+        });
+    }
+
+    private List<OrganizationCountDTO> getCountByIds(List<String> ids) {
+        QueryWrapper wrapper = new QueryWrapper();
+        QueryWrapper membersGroupWrapper = new QueryWrapper();
+        membersGroupWrapper.select(USER_ROLE_RELATION.SOURCE_ID)
+                .select(QueryMethods.count(QueryMethods.distinct(USER.ID)).as("membercount"))
+                .from(USER_ROLE_RELATION).join(USER).on(USER_ROLE_RELATION.USER_ID.eq(USER.ID))
+                .where(USER_ROLE_RELATION.SOURCE_ID.in(ids));
+        QueryWrapper projectGroupWrapper = new QueryWrapper();
+        projectGroupWrapper.select(PROJECT.ORGANIZATION_ID)
+                .select(QueryMethods.count(PROJECT.ID).as("projectcount"))
+                .from(PROJECT)
+                .where(PROJECT.ORGANIZATION_ID.in(ids))
+                .groupBy(PROJECT.ORGANIZATION_ID);
+        wrapper.select(ORGANIZATION.ID)
+                .select("coalesce(membercount, 0) as memberCount")
+                .select("coalesce(projectcount, 0) as projectCount")
+                .from(ORGANIZATION.as("o"))
+                .leftJoin(membersGroupWrapper.as("members_group")).on("o.id = members_group.source_id")
+                .leftJoin(projectGroupWrapper.as("projects_group")).on("projects_group.organization_id")
+        ;
+        return mapper.selectListByQueryAs(wrapper, OrganizationCountDTO.class);
+    }
+
+    private List<OrganizationDTO> buildOrgAdminInfo(List<OrganizationDTO> records) {
+        records.forEach(dto -> {
+            List<User> orgAdminList = getOrgAdminList(dto.getId());
+            dto.setOrgAdmins(orgAdminList);
+            List<String> userIds = orgAdminList.stream().map(User::getId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(userIds) && userIds.contains(dto.getCreateUser())) {
+                dto.setOrgCreateUserIsAdmin(true);
+            }
+        });
+        return records;
+    }
+
+    private List<User> getOrgAdminList(String orgId) {
+        return QueryChain.of(userRoleRelationMapper)
+                .select(USER.ALL_COLUMNS).from(USER_ROLE_RELATION).join(USER).on(USER_ROLE_RELATION.USER_ID.eq(USER.ID))
+                .where(USER_ROLE_RELATION.ROLE_ID.eq("org_admin")
+                        .and(USER_ROLE_RELATION.SOURCE_ID.eq(orgId)))
+                .listAs(User.class);
     }
 
     private void setLog(String organizationId, String createUser, String type, String content, String path, Object originalValue, Object modifiedValue, List<LogDTO> logs) {

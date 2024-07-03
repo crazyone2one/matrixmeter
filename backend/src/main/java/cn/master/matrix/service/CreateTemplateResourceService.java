@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CreateTemplateResourceService implements CreateProjectResourceService {
     private final ProjectMapper projectMapper;
+    @Qualifier("baseTemplateService")
     private final BaseTemplateService baseTemplateService;
     private final BaseTemplateCustomFieldService baseTemplateCustomFieldService;
     @Qualifier("baseCustomFieldService")

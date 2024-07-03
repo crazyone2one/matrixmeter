@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
@@ -25,11 +26,12 @@ public class ProjectDTO extends Project implements Serializable {
     private Boolean projectCreateUserIsAdmin;
     @Schema(description =  "模块设置", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private List<String> moduleIds;
-    //@Schema(description =  "资源池", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-    //private List<ProjectResourcePoolDTO> resourcePoolList;
+    @Schema(description =  "资源池", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    private List<ProjectResourcePoolDTO> resourcePoolList;
     @Schema(description =  "剩余删除保留天数")
     private Integer remainDayCount;
 
+    @Serial
     private static final long serialVersionUID = 1L;
 }
 

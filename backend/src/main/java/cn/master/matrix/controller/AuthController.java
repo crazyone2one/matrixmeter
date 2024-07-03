@@ -1,15 +1,22 @@
 package cn.master.matrix.controller;
 
+import cn.master.matrix.constants.OperationLogType;
 import cn.master.matrix.entity.UserKey;
-import cn.master.matrix.handler.annotation.HasAnyAuthorize;
+import cn.master.matrix.exception.CustomException;
 import cn.master.matrix.handler.annotation.HasAuthorize;
+import cn.master.matrix.handler.annotation.Log;
 import cn.master.matrix.mapper.UserKeyMapper;
 import cn.master.matrix.payload.LoginRequest;
+import cn.master.matrix.payload.dto.request.user.PersonalUpdatePasswordRequest;
+import cn.master.matrix.payload.dto.request.user.PersonalUpdateRequest;
+import cn.master.matrix.payload.dto.user.PersonalDTO;
 import cn.master.matrix.payload.response.JwtResponse;
 import cn.master.matrix.security.JwtProvider;
 import cn.master.matrix.security.UserPrinciple;
 import cn.master.matrix.service.UserKeyService;
 import cn.master.matrix.service.UserService;
+import cn.master.matrix.service.log.UserLogService;
+import cn.master.matrix.util.SessionUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +25,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +34,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -90,18 +99,41 @@ public class AuthController {
         userKeyService.updateBatch(userKeys);
     }
 
-    @GetMapping("/me")
-    @HasAnyAuthorize(authorities = {"ORGANIZATION_MEMBER:READ", "ORGANIZATION_USER_ROLE"})
-    public ResponseEntity<?> me() {
-        val authentication = SecurityContextHolder.getContext().getAuthentication();
-        val principal = authentication.getPrincipal();
-        val details = authentication.getDetails();
-        return ResponseEntity.ok(principal);
+    @GetMapping("/get/{id}")
+    @Operation(summary = "个人中心-获取信息")
+    public PersonalDTO getInformation(@PathVariable String id) {
+        this.checkPermission(id);
+        return userService.getPersonalById(id);
+    }
+
+    @PostMapping("/update-info")
+    @Operation(summary = "个人中心-修改信息")
+    @Log(type = OperationLogType.UPDATE, expression = "#mmClass.updateAccountLog(#request)", mmClass = UserLogService.class)
+    public boolean updateUser(@Validated @RequestBody PersonalUpdateRequest request) {
+        this.checkPermission(request.getId());
+        return userService.updateAccount(request, SessionUtils.getUserId());
+    }
+
+    @PostMapping("/update-password")
+    @Operation(summary = "个人中心-修改密码")
+    @Log(type = OperationLogType.UPDATE, expression = "#mmClass.updatePasswordLog(#request)", mmClass = UserLogService.class)
+    public String updateUser(@Validated @RequestBody PersonalUpdatePasswordRequest request) {
+        this.checkPermission(request.getId());
+        if (userService.updatePassword(request)) {
+            // todo 下线
+        }
+        return "OK";
     }
 
     @GetMapping("/demo")
     @HasAuthorize("ORGANIZATION_USER_ROLE")
     public String demo() {
         return "demo";
+    }
+
+    private void checkPermission(String id) {
+        if (!StringUtils.equals(id, SessionUtils.getUserId())) {
+            throw new CustomException("personal.no.permission");
+        }
     }
 }

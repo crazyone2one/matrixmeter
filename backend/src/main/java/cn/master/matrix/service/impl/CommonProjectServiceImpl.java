@@ -13,18 +13,23 @@ import cn.master.matrix.mapper.UserRoleRelationMapper;
 import cn.master.matrix.payload.dto.LogDTO;
 import cn.master.matrix.payload.dto.OptionDTO;
 import cn.master.matrix.payload.dto.ProjectDTO;
+import cn.master.matrix.payload.dto.ProjectResourcePoolDTO;
 import cn.master.matrix.payload.dto.request.*;
+import cn.master.matrix.payload.dto.user.UserExtendDTO;
 import cn.master.matrix.service.CommonProjectService;
 import cn.master.matrix.service.OperationLogService;
+import cn.master.matrix.util.DateUtils;
 import cn.master.matrix.util.JsonUtils;
 import cn.master.matrix.util.Translator;
 import com.mybatisflex.core.logicdelete.LogicDeleteManager;
 import com.mybatisflex.core.query.QueryChain;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -37,8 +42,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static cn.master.matrix.entity.table.ProjectTableDef.PROJECT;
+import static cn.master.matrix.entity.table.ProjectTestResourcePoolTableDef.PROJECT_TEST_RESOURCE_POOL;
 import static cn.master.matrix.entity.table.TestResourcePoolTableDef.TEST_RESOURCE_POOL;
 import static cn.master.matrix.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
+import static cn.master.matrix.entity.table.UserTableDef.USER;
 
 /**
  * 项目 服务层实现。
@@ -419,6 +427,87 @@ public class CommonProjectServiceImpl extends ServiceImpl<ProjectMapper, Project
         return queryChain().where(Project::getOrganizationId).eq(orgId).list()
                 .stream()
                 .map(Project::getId).toList();
+    }
+
+    @Override
+    public List<ProjectDTO> buildUserInfo(List<ProjectDTO> projectList) {
+
+        if (CollectionUtils.isNotEmpty(projectList)) {
+            // 获取项目id
+            List<String> projectIds = projectList.stream().map(ProjectDTO::getId).toList();
+            List<UserExtendDTO> users = getProjectAdminList(projectIds);
+            List<ProjectDTO> projectDTOList = getProjectExtendDTOList(projectIds);
+            Map<String, ProjectDTO> projectMap = projectDTOList.stream().collect(Collectors.toMap(ProjectDTO::getId, projectDTO -> projectDTO));
+            //根据sourceId分组
+            Map<String, List<UserExtendDTO>> userMapList = users.stream().collect(Collectors.groupingBy(UserExtendDTO::getSourceId));
+            //获取资源池
+            List<ProjectResourcePoolDTO> projectResourcePoolDTOList = getProjectResourcePoolDTOList(projectIds);
+            //根据projectId分组 key为项目id 值为资源池TestResourcePool
+            Map<String, List<ProjectResourcePoolDTO>> poolMap = projectResourcePoolDTOList.stream().collect(Collectors.groupingBy(ProjectResourcePoolDTO::getProjectId));
+
+            projectList.forEach(projectDTO -> {
+                if (CollectionUtils.isNotEmpty(projectDTO.getModuleSetting())) {
+                    projectDTO.setModuleIds(projectDTO.getModuleSetting());
+                }
+                projectDTO.setMemberCount(projectMap.get(projectDTO.getId()).getMemberCount());
+                List<UserExtendDTO> userExtendDTOS = userMapList.get(projectDTO.getId());
+                if (CollectionUtils.isNotEmpty(userExtendDTOS)) {
+                    projectDTO.setAdminList(userExtendDTOS);
+                    List<String> userIdList = userExtendDTOS.stream().map(User::getId).collect(Collectors.toList());
+                    projectDTO.setProjectCreateUserIsAdmin(CollectionUtils.isNotEmpty(userIdList) && userIdList.contains(projectDTO.getCreateUser()));
+                } else {
+                    projectDTO.setAdminList(new ArrayList<>());
+                }
+                List<ProjectResourcePoolDTO> projectResourcePoolDTOS = poolMap.get(projectDTO.getId());
+                if (CollectionUtils.isNotEmpty(projectResourcePoolDTOS)) {
+                    projectDTO.setResourcePoolList(projectResourcePoolDTOS);
+                } else {
+                    projectDTO.setResourcePoolList(new ArrayList<>());
+                }
+                //projectDTO.setCreateUser(userMap.get(projectDTO.getCreateUser()));
+                //projectDTO.setUpdateUser(userMap.get(projectDTO.getUpdateUser()));
+                //projectDTO.setDeleteUser(userMap.get(projectDTO.getDeleteUser()));
+                if (BooleanUtils.isTrue(projectDTO.getDeleted())) {
+                    projectDTO.setRemainDayCount(getDeleteRemainDays(DateUtils.localDate2Long(projectDTO.getDeleteTime())));
+                }
+            });
+        }
+        return projectList;
+    }
+
+    private Integer getDeleteRemainDays(Long deleteTime) {
+        long remainDays = (System.currentTimeMillis() - deleteTime) / (1000 * 3600 * 24);
+        int remainDayCount = DEFAULT_REMAIN_DAY_COUNT - (int) remainDays;
+        return remainDayCount > 0 ? remainDayCount : 1;
+    }
+
+    private List<ProjectResourcePoolDTO> getProjectResourcePoolDTOList(List<String> projectIds) {
+        return QueryChain.of(ProjectTestResourcePool.class)
+                .select(PROJECT_TEST_RESOURCE_POOL.PROJECT_ID, TEST_RESOURCE_POOL.ALL_COLUMNS)
+                .from(PROJECT_TEST_RESOURCE_POOL).innerJoin(TEST_RESOURCE_POOL).on(TEST_RESOURCE_POOL.ID.eq(PROJECT_TEST_RESOURCE_POOL.TEST_RESOURCE_POOL_ID))
+                .where(TEST_RESOURCE_POOL.ENABLE.eq(true)
+                        .and(PROJECT_TEST_RESOURCE_POOL.PROJECT_ID.in(projectIds)))
+                .listAs(ProjectResourcePoolDTO.class);
+    }
+
+    private List<ProjectDTO> getProjectExtendDTOList(List<String> projectIds) {
+        QueryWrapper wrapper = new QueryWrapper();
+        wrapper.select(USER_ROLE_RELATION.SOURCE_ID, USER.ID)
+                .from(USER_ROLE_RELATION).leftJoin(USER).on(USER.ID.eq(USER_ROLE_RELATION.USER_ID))
+                .where(USER_ROLE_RELATION.SOURCE_ID.in(projectIds));
+        return queryChain()
+                .select(PROJECT.ID).select("count(distinct temp.id) as memberCount")
+                .from(PROJECT.as("p")).leftJoin(wrapper.as("temp")).on("p.id = temp.source_id")
+                .groupBy(PROJECT.ID)
+                .listAs(ProjectDTO.class);
+    }
+
+    private List<UserExtendDTO> getProjectAdminList(List<String> projectIds) {
+        return QueryChain.of(userRoleRelationMapper).select(USER.ALL_COLUMNS, USER_ROLE_RELATION.SOURCE_ID)
+                .from(USER_ROLE_RELATION).leftJoin(USER).on(USER.ID.eq(USER_ROLE_RELATION.USER_ID))
+                .where(USER_ROLE_RELATION.SOURCE_ID.in(projectIds)
+                        .and(USER_ROLE_RELATION.ROLE_ID.eq("project_admin")))
+                .listAs(UserExtendDTO.class);
     }
 
     private void setLog(LogDTO dto, String path, String method, List<LogDTO> logDTOList) {

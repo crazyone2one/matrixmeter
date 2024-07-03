@@ -41,4 +41,6 @@ public interface CommonProjectService extends IService<Project> {
     void rename(UpdateProjectNameRequest request, String userId);
 
     List<String> getProjectIdByOrgId(String orgId);
+
+    List<ProjectDTO> buildUserInfo(List<ProjectDTO> records);
 }

@@ -50,8 +50,8 @@ import static cn.master.matrix.exception.CommonResultCode.*;
  * @since 1.0.0 2024-07-02T14:28:51.717977100
  */
 @Slf4j
-@Service
 @RequiredArgsConstructor
+@Service("baseTemplateService")
 public class BaseTemplateServiceImpl extends ServiceImpl<TemplateMapper, Template> implements BaseTemplateService {
     @Qualifier("baseCustomFieldService")
     private final BaseCustomFieldService baseCustomFieldService;

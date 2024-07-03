@@ -1,11 +1,9 @@
 package cn.master.matrix.service;
 
-import cn.master.matrix.entity.User;
-import cn.master.matrix.entity.UserRole;
+import cn.master.matrix.entity.*;
 import cn.master.matrix.payload.dto.request.user.UserExcludeOptionDTO;
 import cn.master.matrix.payload.dto.user.UserTableResponse;
 import com.mybatisflex.core.service.IService;
-import cn.master.matrix.entity.UserRoleRelation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 
@@ -44,4 +42,6 @@ public interface BaseUserRoleRelationService extends IService<UserRoleRelation> 
     void delete(String id);
 
     List<UserExcludeOptionDTO> getExcludeSelectOptionWithLimit(String roleId, String keyword);
+
+    Map<Organization, List<Project>> selectOrganizationProjectByUserId(String userId);
 }

@@ -1,10 +1,7 @@
 package cn.master.matrix.service.impl;
 
 import cn.master.matrix.constants.*;
-import cn.master.matrix.entity.Organization;
-import cn.master.matrix.entity.User;
-import cn.master.matrix.entity.UserRole;
-import cn.master.matrix.entity.UserRoleRelation;
+import cn.master.matrix.entity.*;
 import cn.master.matrix.exception.CustomException;
 import cn.master.matrix.mapper.UserRoleRelationMapper;
 import cn.master.matrix.payload.dto.LogDTO;
@@ -241,6 +238,23 @@ public class BaseUserRoleRelationServiceImpl extends ServiceImpl<UserRoleRelatio
             }
         });
         return selectOptions;
+    }
+
+    @Override
+    public Map<Organization, List<Project>> selectOrganizationProjectByUserId(String userId) {
+        Map<Organization, List<Project>> returnMap = new LinkedHashMap<>();
+        val userRoleRelations = queryChain().where(USER_ROLE_RELATION.USER_ID.eq(userId)).list();
+        for (UserRoleRelation userRoleRelation : userRoleRelations) {
+            Organization organization = QueryChain.of(Organization.class).where(Organization::getId).eq(userRoleRelation.getOrganizationId()).one();
+            if (organization != null) {
+                returnMap.computeIfAbsent(organization, k -> new ArrayList<>());
+                Project project = QueryChain.of(Project.class).where(Project::getId).eq(userRoleRelation.getSourceId()).one();
+                if (project != null && !returnMap.get(organization).contains(project)) {
+                    returnMap.get(organization).add(project);
+                }
+            }
+        }
+        return returnMap;
     }
 
     private List<UserExcludeOptionDTO> getExcludeSelectOptionWithLimit(String keyword) {

@@ -7,12 +7,11 @@ import cn.master.matrix.exception.CustomException;
 import cn.master.matrix.mapper.UserMapper;
 import cn.master.matrix.payload.dto.TableBatchProcessDTO;
 import cn.master.matrix.payload.dto.request.BasePageRequest;
+import cn.master.matrix.payload.dto.request.user.PersonalUpdatePasswordRequest;
+import cn.master.matrix.payload.dto.request.user.PersonalUpdateRequest;
 import cn.master.matrix.payload.dto.request.user.UserCreateRequest;
 import cn.master.matrix.payload.dto.request.user.UserEditRequest;
-import cn.master.matrix.payload.dto.user.UserCreateInfo;
-import cn.master.matrix.payload.dto.user.UserDTO;
-import cn.master.matrix.payload.dto.user.UserRolePermissionDTO;
-import cn.master.matrix.payload.dto.user.UserTableResponse;
+import cn.master.matrix.payload.dto.user.*;
 import cn.master.matrix.payload.dto.user.response.UserBatchCreateResponse;
 import cn.master.matrix.payload.response.TableBatchProcessResponse;
 import cn.master.matrix.service.*;
@@ -20,6 +19,7 @@ import cn.master.matrix.service.log.UserLogService;
 import cn.master.matrix.util.Translator;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
+import com.mybatisflex.core.query.QueryMethods;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -37,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.master.matrix.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
 import static cn.master.matrix.entity.table.UserTableDef.USER;
 
 /**
@@ -190,6 +191,59 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         userDTO.setUserRoles(dto.getUserRoles());
         userDTO.setUserRolePermissions(dto.getList());
         return userDTO;
+    }
+
+    @Override
+    public PersonalDTO getPersonalById(String id) {
+        val userDTO = getUserByKeyword(id);
+        PersonalDTO personalDTO = new PersonalDTO();
+        if (Objects.nonNull(userDTO)) {
+            BeanUtils.copyProperties(userDTO, personalDTO);
+            personalDTO.setOrgProjectList(userRoleRelationService.selectOrganizationProjectByUserId(userDTO.getId()));
+        }
+        return personalDTO;
+    }
+
+    @Override
+    public boolean updateAccount(PersonalUpdateRequest request, String operator) {
+        this.checkUserEmail(request.getId(), request.getEmail());
+        User editUser = new User();
+        editUser.setId(request.getId());
+        editUser.setName(request.getUsername());
+        editUser.setPhone(request.getPhone());
+        editUser.setEmail(request.getEmail());
+        editUser.setUpdateUser(operator);
+        return mapper.update(editUser) > 0;
+    }
+
+    @Override
+    public boolean updatePassword(PersonalUpdatePasswordRequest request) {
+        this.checkOldPassword(request.getId(), request.getOldPassword());
+        User editUser = new User();
+        editUser.setId(request.getId());
+        editUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        return mapper.update(editUser) > 0;
+    }
+
+    @Override
+    public List<UserExtendDTO> getMemberOption(String sourceId, String keyword) {
+        val wrapper = queryChain().select(QueryMethods.distinct(USER.ALL_COLUMNS))
+                .from(USER).leftJoin(USER_ROLE_RELATION).on(USER.ID.eq(USER_ROLE_RELATION.USER_ID))
+                .where(USER_ROLE_RELATION.SOURCE_ID.eq(sourceId)
+                        .and(USER.NAME.like(keyword).or(USER.EMAIL.like(keyword))))
+                .groupBy(USER.ID).limit(1000);
+        return mapper.selectListByQueryAs(wrapper, UserExtendDTO.class);
+    }
+
+    @Override
+    public List<User> getUserList(String keyword) {
+        return queryChain().where(USER.NAME.like(keyword).or(USER.EMAIL.like(keyword))).list();
+    }
+
+    private void checkOldPassword(String id, String oldPassword) {
+        queryChain().where(User::getId).eq(id)
+                .and(User::getPassword).eq(passwordEncoder.encode(oldPassword)).oneOpt()
+                .orElseThrow(() -> new CustomException(Translator.get("password_modification_failed")));
     }
 
     private void checkUserInDb(List<String> userIdList) {

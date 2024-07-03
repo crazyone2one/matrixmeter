@@ -51,6 +51,7 @@ public class SecurityConfiguration {
                 .logoutSuccessHandler(
                         (request, response, authentication) -> SecurityContextHolder.clearContext()
                 ));
+        security.sessionManagement(s -> s.maximumSessions(1));
         return security.build();
     }
 

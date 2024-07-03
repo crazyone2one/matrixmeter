@@ -1,11 +1,9 @@
 package cn.master.matrix.service;
 
 import cn.master.matrix.entity.Project;
-import cn.master.matrix.payload.dto.LogDTO;
-import cn.master.matrix.payload.dto.OptionDTO;
-import cn.master.matrix.payload.dto.OptionDisabledDTO;
-import cn.master.matrix.payload.dto.OrgUserExtend;
+import cn.master.matrix.payload.dto.*;
 import cn.master.matrix.payload.dto.request.*;
+import cn.master.matrix.payload.dto.user.UserExtendDTO;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.service.IService;
 import cn.master.matrix.entity.Organization;
@@ -28,6 +26,8 @@ public interface OrganizationService extends IService<Organization> {
 
     void addMemberBySystem(OrganizationMemberBatchRequest request, String createUserId);
 
+    void addMemberBySystem(OrganizationMemberRequest organizationMemberRequest, String createUserId);
+
     Page<OrgUserExtend> getMemberListByOrg(OrganizationRequest request);
 
     void addMemberByOrg(OrganizationMemberExtendRequest request, String userId);
@@ -49,4 +49,26 @@ public interface OrganizationService extends IService<Organization> {
     List<OptionDisabledDTO> getUserList(String organizationId, String keyword);
 
     Organization checkResourceExist(String id);
+
+    Page<OrganizationDTO> list(OrganizationRequest request);
+
+    List<String> getOrgAdminIds(String organizationId);
+
+    void update(OrganizationDTO organizationDTO);
+
+    void updateName(OrganizationDTO organizationDTO);
+
+    void delete(OrganizationDeleteRequest organizationDeleteRequest);
+
+    void recover(String id);
+
+    void enable(String id);
+
+    void disable(String id);
+
+    Page<UserExtendDTO> getMemberListBySystem(OrganizationRequest request);
+
+    OrganizationDTO getDefault();
+
+    Map<String, Long> getTotal(String organizationId);
 }
