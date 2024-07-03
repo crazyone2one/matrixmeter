@@ -6,11 +6,9 @@ import cn.master.matrix.handler.annotation.HasAuthorize;
 import cn.master.matrix.handler.annotation.Log;
 import cn.master.matrix.handler.validation.Created;
 import cn.master.matrix.handler.validation.Updated;
+import cn.master.matrix.payload.dto.OptionDTO;
 import cn.master.matrix.payload.dto.ProjectDTO;
-import cn.master.matrix.payload.dto.request.AddProjectRequest;
-import cn.master.matrix.payload.dto.request.OrganizationProjectRequest;
-import cn.master.matrix.payload.dto.request.ProjectMemberRequest;
-import cn.master.matrix.payload.dto.request.UpdateProjectRequest;
+import cn.master.matrix.payload.dto.request.*;
 import cn.master.matrix.payload.dto.user.UserExtendDTO;
 import cn.master.matrix.service.OrganizationProjectService;
 import cn.master.matrix.service.log.OrganizationProjectLogService;
@@ -61,6 +59,14 @@ public class OrganizationProjectController {
         return organizationProjectService.update(request, SessionUtils.getUserId());
     }
 
+    @PostMapping("/rename")
+    @Operation(summary = "系统设置-组织-项目-修改项目名称")
+    @HasAuthorize(PermissionConstants.ORGANIZATION_PROJECT_READ_UPDATE)
+    @Log(type = OperationLogType.UPDATE, expression = "#mmClass.renameLog(#request)", mmClass = OrganizationProjectLogService.class)
+    public void rename(@RequestBody @Validated({Updated.class}) UpdateProjectNameRequest request) {
+        organizationProjectService.rename(request, SessionUtils.getUserId());
+    }
+
     @PostMapping("/page")
     @HasAuthorize(PermissionConstants.ORGANIZATION_PROJECT_READ)
     @Operation(summary = "系统设置-组织-项目-获取项目列表")
@@ -109,5 +115,49 @@ public class OrganizationProjectController {
     @Operation(summary = "系统设置-组织-项目-成员列表")
     public Page<UserExtendDTO> getProjectMember(@Validated @RequestBody ProjectMemberRequest request) {
         return organizationProjectService.getProjectMember(request);
+    }
+
+    @PostMapping("/add-members")
+    @HasAuthorize(PermissionConstants.ORGANIZATION_PROJECT_MEMBER_ADD)
+    @Operation(summary = "系统设置-组织-项目-添加成员")
+    public void addProjectMember(@Validated @RequestBody ProjectAddMemberRequest request) {
+        ProjectAddMemberBatchRequest batchRequest = new ProjectAddMemberBatchRequest();
+        batchRequest.setProjectIds(List.of(request.getProjectId()));
+        batchRequest.setUserIds(request.getUserIds());
+        organizationProjectService.addProjectMember(batchRequest, SessionUtils.getUserId());
+    }
+
+    @GetMapping("/remove-member/{projectId}/{userId}")
+    @Operation(summary = "系统设置-组织-项目-移除成员")
+    @Parameter(name = "userId", description = "用户id", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED))
+    @Parameter(name = "projectId", description = "项目id", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED))
+    @HasAuthorize(PermissionConstants.ORGANIZATION_PROJECT_MEMBER_DELETE)
+    @Log(type = OperationLogType.DELETE, expression = "#mmClass.deleteLog(#projectId)", mmClass = OrganizationProjectLogService.class)
+    public void removeProjectMember(@PathVariable String projectId, @PathVariable String userId) {
+        organizationProjectService.removeProjectMember(projectId, userId, SessionUtils.getUserId());
+    }
+
+    @GetMapping("/user-admin-list/{organizationId}")
+    @Operation(summary = "系统设置-组织-项目-获取管理员列表")
+    @HasAuthorize(PermissionConstants.ORGANIZATION_PROJECT_READ)
+    public List<UserExtendDTO> getUserAdminList(@PathVariable String organizationId, @Schema(description = "查询关键字，根据邮箱和用户名查询")
+    @RequestParam(value = "keyword", required = false) String keyword) {
+        return organizationProjectService.getUserAdminList(organizationId, keyword);
+    }
+
+    @GetMapping("/user-member-list/{organizationId}/{projectId}")
+    @Operation(summary = "系统设置-组织-项目-获取成员列表")
+    @HasAuthorize(PermissionConstants.ORGANIZATION_PROJECT_READ)
+    public List<UserExtendDTO> getUserMemberList(@PathVariable String organizationId, @PathVariable String projectId,
+                                                 @Schema(description = "查询关键字，根据邮箱和用户名查询")
+                                                 @RequestParam(value = "keyword", required = false) String keyword) {
+        return organizationProjectService.getUserMemberList(organizationId, projectId, keyword);
+    }
+
+    @PostMapping("/pool-options")
+    @Operation(summary = "系统设置-组织-项目-获取资源池下拉选项")
+    @HasAuthorize(PermissionConstants.ORGANIZATION_PROJECT_READ)
+    public List<OptionDTO> getProjectOptions(@Validated @RequestBody ProjectPoolRequest request) {
+        return organizationProjectService.getTestResourcePoolOptions(request);
     }
 }

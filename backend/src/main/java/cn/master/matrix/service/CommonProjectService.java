@@ -1,11 +1,12 @@
 package cn.master.matrix.service;
 
+import cn.master.matrix.payload.dto.OptionDTO;
 import cn.master.matrix.payload.dto.ProjectDTO;
-import cn.master.matrix.payload.dto.request.AddProjectRequest;
-import cn.master.matrix.payload.dto.request.ProjectAddMemberBatchRequest;
-import cn.master.matrix.payload.dto.request.UpdateProjectRequest;
+import cn.master.matrix.payload.dto.request.*;
 import com.mybatisflex.core.service.IService;
 import cn.master.matrix.entity.Project;
+
+import java.util.List;
 
 /**
  * 项目 服务层。
@@ -30,4 +31,12 @@ public interface CommonProjectService extends IService<Project> {
     boolean enable(String id, String userId);
 
     boolean disable(String id, String userId);
+
+    void removeProjectMember(String projectId, String userId, String createUser, String module, String path);
+
+    void checkProjectNotExist(String projectId);
+
+    List<OptionDTO> getTestResourcePoolOptions(ProjectPoolRequest request);
+
+    void rename(UpdateProjectNameRequest request, String userId);
 }

@@ -11,10 +11,9 @@ import cn.master.matrix.mapper.ProjectTestResourcePoolMapper;
 import cn.master.matrix.mapper.UserMapper;
 import cn.master.matrix.mapper.UserRoleRelationMapper;
 import cn.master.matrix.payload.dto.LogDTO;
+import cn.master.matrix.payload.dto.OptionDTO;
 import cn.master.matrix.payload.dto.ProjectDTO;
-import cn.master.matrix.payload.dto.request.AddProjectRequest;
-import cn.master.matrix.payload.dto.request.ProjectAddMemberBatchRequest;
-import cn.master.matrix.payload.dto.request.UpdateProjectRequest;
+import cn.master.matrix.payload.dto.request.*;
 import cn.master.matrix.service.CommonProjectService;
 import cn.master.matrix.service.OperationLogService;
 import cn.master.matrix.util.JsonUtils;
@@ -38,6 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static cn.master.matrix.entity.table.TestResourcePoolTableDef.TEST_RESOURCE_POOL;
 import static cn.master.matrix.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
 
 /**
@@ -55,7 +55,12 @@ public class CommonProjectServiceImpl extends ServiceImpl<ProjectMapper, Project
     private final ProjectTestResourcePoolMapper projectTestResourcePoolMapper;
     private final UserMapper userMapper;
 
+    public static final Integer DEFAULT_REMAIN_DAY_COUNT = 30;
+    public static final String API_TEST = "apiTest";
+    public static final String TEST_PLAN = "testPlan";
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void addProjectMember(ProjectAddMemberBatchRequest request, String createUser, String path, String type, String content, String module) {
         List<LogDTO> logDTOList = new ArrayList<>();
         List<UserRoleRelation> userRoleRelations = new ArrayList<>();
@@ -233,6 +238,37 @@ public class CommonProjectServiceImpl extends ServiceImpl<ProjectMapper, Project
                 .update();
     }
 
+    @Override
+    public void removeProjectMember(String projectId, String userId, String createUser, String module, String path) {
+        checkProjectNotExist(projectId);
+        val user = QueryChain.of(userMapper).where(User::getId).eq(userId).oneOpt()
+                .orElseThrow(() -> new CustomException(Translator.get("user_not_exist")));
+        //判断用户是不是最后一个管理员  如果是  就报错
+        val exists = QueryChain.of(userRoleRelationMapper).where(USER_ROLE_RELATION.USER_ID.ne(userId)
+                .and(USER_ROLE_RELATION.SOURCE_ID.eq(projectId))
+                .and(USER_ROLE_RELATION.ROLE_ID.eq(InternalUserRole.PROJECT_ADMIN.getValue()))).exists();
+        if (!exists) {
+            throw new CustomException(Translator.get("keep_at_least_one_administrator"));
+        }
+        if (StringUtils.equals(projectId, user.getLastProjectId())) {
+            user.setLastProjectId(StringUtils.EMPTY);
+            userMapper.update(user);
+        }
+        List<LogDTO> logDTOList = new ArrayList<>();
+        val queryChain = QueryChain.of(userRoleRelationMapper).where(USER_ROLE_RELATION.USER_ID.eq(userId)
+                .and(USER_ROLE_RELATION.SOURCE_ID.eq(projectId)));
+        queryChain.list().forEach(userRoleRelation -> {
+            String logProjectId = OperationLogConstants.SYSTEM;
+            if (StringUtils.equals(module, OperationLogModule.SETTING_ORGANIZATION_PROJECT)) {
+                logProjectId = OperationLogConstants.ORGANIZATION;
+            }
+            LogDTO logDTO = new LogDTO(logProjectId, OperationLogConstants.SYSTEM, userRoleRelation.getId(), createUser, OperationLogType.DELETE.name(), module, Translator.get("delete") + Translator.get("project_member") + ": " + user.getName());
+            setLog(logDTO, path, HttpMethodConstants.GET.name(), logDTOList);
+        });
+        operationLogService.batchAdd(logDTOList);
+        LogicDeleteManager.execWithoutLogicDelete(() -> userRoleRelationMapper.deleteByQuery(queryChain));
+    }
+
     private void checkProjectExistByName(Project project) {
         val exists = queryChain().where(Project::getName).eq(project.getName())
                 .and(Project::getOrganizationId).eq(project.getOrganizationId())
@@ -330,9 +366,52 @@ public class CommonProjectServiceImpl extends ServiceImpl<ProjectMapper, Project
         operationLogService.batchAdd(logDTOList);
     }
 
-    private void checkProjectNotExist(String projectId) {
+    @Override
+    public void checkProjectNotExist(String projectId) {
         queryChain().where(Project::getId).eq(projectId).oneOpt()
                 .orElseThrow(() -> new CustomException(Translator.get("project_is_not_exist")));
+    }
+
+    @Override
+    public List<OptionDTO> getTestResourcePoolOptions(ProjectPoolRequest request) {
+        List<OptionDTO> optionDTOS = new ArrayList<>();
+        //获取制定组织的资源池  和全部组织的资源池
+        List<TestResourcePool> testResourcePools = new ArrayList<>();
+        if (StringUtils.isNotEmpty(request.getOrganizationId())) {
+            val poolOrganizationList = QueryChain.of(TestResourcePoolOrganization.class)
+                    .where(TestResourcePoolOrganization::getOrgId).eq(request.getOrganizationId())
+                    .list();
+            if (CollectionUtils.isNotEmpty(poolOrganizationList)) {
+                List<String> poolIds = poolOrganizationList.stream().map(TestResourcePoolOrganization::getTestResourcePoolId).toList();
+                testResourcePools.addAll(QueryChain.of(TestResourcePool.class).where(TestResourcePool::getId).in(poolIds).and(TestResourcePool::getEnable).eq(true).list());
+            }
+        }
+        val queryChain = QueryChain.of(TestResourcePool.class).where(TEST_RESOURCE_POOL.ALL_ORG.eq(true).and(TEST_RESOURCE_POOL.ENABLE.eq(true)));
+        testResourcePools.addAll(queryChain.list());
+        testResourcePools = testResourcePools.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList());
+        List<String> moduleIds = request.getModulesIds();
+        testResourcePools.forEach(pool -> {
+            if (moduleIds.contains(API_TEST) || moduleIds.contains(TEST_PLAN)) {
+                OptionDTO optionDTO = new OptionDTO();
+                optionDTO.setId(pool.getId());
+                optionDTO.setName(pool.getName());
+                optionDTOS.add(optionDTO);
+            }
+        });
+        return optionDTOS;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void rename(UpdateProjectNameRequest request, String userId) {
+        checkProjectNotExist(request.getId());
+        Project project = new Project();
+        project.setId(request.getId());
+        project.setName(request.getName());
+        project.setOrganizationId(request.getOrganizationId());
+        checkProjectExistByName(project);
+        project.setUpdateUser(userId);
+        mapper.update(project);
     }
 
     private void setLog(LogDTO dto, String path, String method, List<LogDTO> logDTOList) {
