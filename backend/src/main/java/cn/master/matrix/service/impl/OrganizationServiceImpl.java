@@ -523,7 +523,7 @@ public class OrganizationServiceImpl extends ServiceImpl<OrganizationMapper, Org
         wrapper.select("temp.*")
                 .select("max(if(temp.role_id = 'org_admin', true, false)) as adminFlag")
                 .select("min(temp.memberTime) as groupTime")
-                .from(subWrapper.as("temp"))
+                .from(new SelectQueryTable(subWrapper).as("temp"))
                 .groupBy("temp.id")
                 .orderBy("adminFlag", "groupTime");
         return userRoleRelationMapper.paginateAs(Page.of(request.getPageNum(), request.getPageSize()), wrapper, UserExtendDTO.class);

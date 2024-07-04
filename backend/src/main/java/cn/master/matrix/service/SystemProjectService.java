@@ -12,6 +12,7 @@ import cn.master.matrix.util.Translator;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.SelectQueryTable;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -93,7 +94,7 @@ public class SystemProjectService {
         wrapper.select("temp.*")
                 .select("max(if(temp.role_id = 'org_admin', true, false)) as adminFlag")
                 .select("min(temp.memberTime) as groupTime")
-                .from(subWrapper.as("temp"))
+                .from(new SelectQueryTable(subWrapper).as("temp"))
                 .groupBy("temp.id")
                 .orderBy("adminFlag", "groupTime");
         return userRoleRelationMapper.paginateAs(Page.of(request.getPageNum(), request.getPageSize()), wrapper, UserExtendDTO.class);

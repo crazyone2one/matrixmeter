@@ -28,6 +28,16 @@ export default defineConfig(({ command, mode }) => {
           replacement: path.resolve(__dirname, ".", "src") + "/",
         },
       ],
+      extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx", ".json", ".vue"], // 自动匹配文件后缀名
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            "naive-ui": ["naive-ui"],
+          },
+        },
+      },
     },
     define: {
       __APP_ENV__: JSON.stringify(env.APP_ENV),

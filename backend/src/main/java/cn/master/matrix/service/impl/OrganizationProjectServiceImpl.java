@@ -17,6 +17,7 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.query.QueryMethods;
 import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.SelectQueryTable;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.collections4.CollectionUtils;
@@ -103,7 +104,7 @@ public class OrganizationProjectServiceImpl implements OrganizationProjectServic
                                 .or(USER.EMAIL.like(request.getKeyword()))
                                 .or(USER.PHONE.like(request.getKeyword()))));
         wrapper.select("temp.*", "MAX( if (temp.role_id = 'project_admin', true, false)) as adminFlag", "MIN(temp.memberTime) as groupTime")
-                .from(subWrapper).as("temp")
+                .from(new SelectQueryTable(subWrapper).as("temp"))
                 .groupBy("temp.id")
                 .orderBy("adminFlag", "groupTime");
         return commonProjectService.pageAs(Page.of(request.getPageNum(), request.getPageSize()), wrapper, UserExtendDTO.class);

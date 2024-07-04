@@ -5,7 +5,7 @@ import vueHook from "alova/vue";
 export const alovaInstance = createAlova({
   requestAdapter: fetchAdapter(),
   baseURL: import.meta.env.BASE_URL,
-  timeout: 5000,
+  timeout: 300 * 1000,
   statesHook: vueHook,
   beforeRequest(method) {
     if (!method.meta.ignoreToken) {
@@ -18,7 +18,7 @@ export const alovaInstance = createAlova({
         throw new Error(response.statusText);
       }
       const json = await response.json();
-      if (json.code !== 200) {
+      if (json.code !== 100200) {
         // 抛出错误或返回reject状态的Promise实例时，此请求将抛出错误
         throw new Error(json.message);
       }
