@@ -62,9 +62,11 @@ public class UserRolePermissionServiceImpl extends ServiceImpl<UserRolePermissio
                 .stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
+        // todo 将Permissions数据存在缓存
         val userRolePermissions = QueryChain.of(UserRolePermission.class).where(UserRolePermission::getRoleId).in(authorities).list();
-        val list = userRolePermissions.stream().map(UserRolePermission::getPermissionId).toList().stream().distinct().toList();
-        return Arrays.stream(permissions).anyMatch(list::contains);
+        val permissionsInDb = userRolePermissions.stream().map(UserRolePermission::getPermissionId).toList().stream().distinct().toList();
+        val tmpAuthorities = Arrays.asList(permissions[0].split(","));
+        return tmpAuthorities.stream().anyMatch(permissionsInDb::contains);
     }
 
     @Override
