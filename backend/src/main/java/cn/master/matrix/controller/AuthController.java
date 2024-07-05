@@ -26,6 +26,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -66,7 +67,10 @@ public class AuthController {
         UserPrinciple userDetails = (UserPrinciple) authentication.getPrincipal();
         revokeAllTokenByUser(userDetails);
         saveUserToken(token, refreshToken, userDetails);
-        return ResponseEntity.ok(new JwtResponse(token, refreshToken, userService.getUserDTO(userDetails.getUser().getId())));
+        val jwtResponse = new JwtResponse(token, refreshToken);
+        val userDTO = userService.getUserDTO(userDetails.getUser().getId());
+        BeanUtils.copyProperties(userDTO, jwtResponse);
+        return ResponseEntity.ok(jwtResponse);
     }
 
     private void saveUserToken(String accessToken, String refreshToken, UserPrinciple userDetails) {
@@ -86,7 +90,7 @@ public class AuthController {
             val principal = (UserPrinciple) authentication.getPrincipal();
             revokeAllTokenByUser(principal);
             saveUserToken(accessToken, refreshToken, principal);
-            val jwtResponse = new JwtResponse(accessToken, refreshToken, userService.getUserDTO(principal.getUser().getId()));
+            val jwtResponse = new JwtResponse(accessToken, refreshToken);
             new ObjectMapper().writeValue(response.getOutputStream(), jwtResponse);
         }
     }
