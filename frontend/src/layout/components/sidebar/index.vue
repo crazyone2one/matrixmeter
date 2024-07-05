@@ -13,10 +13,9 @@ const {t} = useI18n()
 const appStore = useAppStore();
 const expandedKeys = ref<string[]>([]);
 const openKeys = ref<string[]>([]);
-const currentKey = ref<string>("");
 const options = ref<MenuOption[]>([]);
 const {menuTree} = useMenuTree();
-console.log(menuTree.value)
+
 const findMenuOpenKeys = (target: string) => {
   const result: string[] = [];
   let isFind = false;
@@ -51,13 +50,13 @@ listenerRouteChange((newRoute) => {
     );
 
     const keySet = new Set([...menuOpenKeys, ...openKeys.value]);
-    expandedKeys.value = [...keySet];
-
+    openKeys.value = [...keySet];
     expandedKeys.value = [activeMenu || menuOpenKeys[menuOpenKeys.length - 1]];
   }
 }, true);
 
 async function travel(_route: RouteRecordRaw[], nodes: MenuOption[] = []) {
+  // console.log('_route',_route)
   if (_route) {
     for (const route of _route) {
       const {meta, name, children} = route;
@@ -131,14 +130,9 @@ onBeforeMount(async () => {
     </router-link>
     <n-menu
         v-model:value="expandedKeys[0]"
-        :default-expanded-keys="expandedKeys"
+        :default-expanded-keys="openKeys"
         :options="options"
         :root-indent="18"
-        @update:value="
-        (k: string) => {
-          currentKey = k
-        }
-      "
     />
   </n-layout-sider>
 </template>

@@ -2,6 +2,7 @@ import {defineStore} from "pinia";
 import {ref} from "vue";
 import {RouteRecordRaw} from "vue-router";
 import {AppState} from "./types";
+import {cloneDeep} from "lodash-es";
 
 const useAppStore = defineStore(
     "app",
@@ -29,11 +30,21 @@ const useAppStore = defineStore(
             currentMenuConfig: [],
             packageType: "",
             ordList: [],
+            projectList: []
         });
         const toggleMenu = (value: boolean) => {
             state.value.hideMenu = value;
         };
         const setTopMenus = (menus: RouteRecordRaw[] | undefined) => state.value.topMenus = menus ? [...menus] : []
+        const getTopMenus = (state: AppState) => {
+            return state.topMenus;
+        }
+        const getCurrentTopMenu = (state: AppState) => {
+            return state.currentTopMenu;
+        }
+        const setCurrentTopMenu = (menu: RouteRecordRaw) => {
+            state.value.currentTopMenu = cloneDeep(menu);
+        }
         const setCurrentOrgId = (id: string) => (state.value.currentOrgId = id);
         const setCurrentProjectId = (id: string) =>
             (state.value.currentProjectId = id);
@@ -41,7 +52,7 @@ const useAppStore = defineStore(
             state,
             toggleMenu,
             setCurrentOrgId,
-            setCurrentProjectId,setTopMenus
+            setCurrentProjectId, setTopMenus, getTopMenus, getCurrentTopMenu, setCurrentTopMenu
         };
     },
     {

@@ -2,6 +2,7 @@
 import {useI18n} from "/@/hooks/use-i18n.ts";
 import {useAppStore, useUserStore} from "/@/store";
 import {useRouter} from "vue-router";
+import TopMenu from "/@/layout/components/header/TopMenu.vue";
 
 const userStore = useUserStore();
 const appStore = useAppStore();
@@ -40,10 +41,20 @@ const handleSelect = async (key: string) => {
 </script>
 <template>
   <n-layout-header bordered>
-    <n-breadcrumb>
-      <n-breadcrumb-item>Dashboard</n-breadcrumb-item>
-      <n-breadcrumb-item>Home</n-breadcrumb-item>
-    </n-breadcrumb>
+    <n-select :options="appStore.state.projectList" style="width: 200px"/>
+    <n-split default-size="0.1" :resize-trigger-size="0.1" style="margin-left: 20px"
+             :pane-1-style="{'margin-right': '20px'}">
+      <template #1>
+        <n-breadcrumb style="margin-top: 8px">
+          <n-breadcrumb-item>Dashboard</n-breadcrumb-item>
+          <n-breadcrumb-item>Home</n-breadcrumb-item>
+        </n-breadcrumb>
+      </template>
+      <template #2>
+        <top-menu/>
+      </template>
+    </n-split>
+
     <n-flex :size="20" align="center" style="line-height: 1">
       <n-dropdown trigger="hover" :options="options" @select="handleSelect">
         <n-button>2021年 第36周</n-button>
