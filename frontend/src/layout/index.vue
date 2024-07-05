@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import MHeader from "/@/layout/components/header/index.vue";
 import sidebar from "/@/layout/components/sidebar/index.vue";
+import { useAppStore } from "/@/store";
+const appStore = useAppStore();
 </script>
 <template>
   <n-layout position="absolute" has-sider>
@@ -12,7 +14,7 @@ import sidebar from "/@/layout/components/sidebar/index.vue";
       >
         <router-view />
       </n-layout-content>
-      <n-layout-footer>
+      <n-layout-footer v-if="appStore.state.footer">
         <n-p>&copy; {{ new Date().getFullYear() }} . All rights reserved.</n-p>
       </n-layout-footer>
     </n-layout>

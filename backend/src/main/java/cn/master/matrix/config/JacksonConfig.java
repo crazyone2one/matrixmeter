@@ -63,7 +63,7 @@ public class JacksonConfig implements Jackson2ObjectMapperBuilderCustomizer, Ord
         builder.serializerByType(Long.class, ToStringSerializer.instance);
 
         builder.serializationInclusion(JsonInclude.Include.NON_NULL);
-        builder.propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        //builder.propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         builder.featuresToEnable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
         builder.featuresToEnable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
         builder.featuresToEnable(JsonParser.Feature.ALLOW_COMMENTS);

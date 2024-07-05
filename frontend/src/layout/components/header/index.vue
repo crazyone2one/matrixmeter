@@ -1,4 +1,12 @@
 <script setup lang="ts">
+import {useI18n} from "/@/hooks/use-i18n.ts";
+import {useAppStore, useUserStore} from "/@/store";
+import {useRouter} from "vue-router";
+
+const userStore = useUserStore();
+const appStore = useAppStore();
+const router = useRouter();
+const {t} = useI18n()
 const options = [
   {
     label: "处理群消息 342 条",
@@ -9,11 +17,26 @@ const options = [
     key: "stmt2",
   },
   {
-    label: "加入群 17 个",
+    label: () => t('personal.exit'),
     key: "stmt3",
   },
 ];
-const handleSelect = () => {};
+const handleSelect = async (key: string) => {
+  switch (key) {
+    case "stmt3":
+      await userStore.logout();
+      const currentRoute = router.currentRoute.value;
+      window.$message.success(t('message.logoutSuccess'))
+      router.push({
+        name: 'login',
+        query: {
+          ...router.currentRoute.value.query,
+          redirect: currentRoute.name as string,
+        }
+      });
+      break;
+  }
+};
 </script>
 <template>
   <n-layout-header bordered>
