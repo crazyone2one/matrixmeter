@@ -26,4 +26,6 @@ public interface UserRolePermissionService extends IService<UserRolePermission> 
     void updatePermissionSetting(PermissionSettingUpdateRequest request);
 
     void deleteByRoleId(String roleId);
+
+    void initPermissions();
 }

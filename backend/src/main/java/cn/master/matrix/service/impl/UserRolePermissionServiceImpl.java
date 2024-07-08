@@ -8,9 +8,16 @@ import cn.master.matrix.payload.dto.request.PermissionSettingUpdateRequest;
 import cn.master.matrix.payload.dto.user.UserRolePermissionDTO;
 import cn.master.matrix.payload.dto.user.UserRoleResourceDTO;
 import cn.master.matrix.service.UserRolePermissionService;
+import cn.master.matrix.util.JsonUtils;
+import cn.master.matrix.util.RedisService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.base.Supplier;
 import com.mybatisflex.core.logicdelete.LogicDeleteManager;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -22,7 +29,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import static cn.master.matrix.entity.table.UserRolePermissionTableDef.USER_ROLE_PERMISSION;
 
 /**
  * 用户组权限 服务层实现。
@@ -30,8 +40,11 @@ import java.util.stream.Collectors;
  * @author 11's papa
  * @since 1.0.0 2024-06-27T16:23:10.923916400
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserRolePermissionServiceImpl extends ServiceImpl<UserRolePermissionMapper, UserRolePermission> implements UserRolePermissionService {
+    private final RedisService redisService;
 
     @Override
     public UserRolePermissionDTO getUserRolePermission(String userId) {
@@ -62,11 +75,18 @@ public class UserRolePermissionServiceImpl extends ServiceImpl<UserRolePermissio
                 .stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
-        // todo 将Permissions数据存在缓存
-        val userRolePermissions = QueryChain.of(UserRolePermission.class).where(UserRolePermission::getRoleId).in(authorities).list();
-        val permissionsInDb = userRolePermissions.stream().map(UserRolePermission::getPermissionId).toList().stream().distinct().toList();
+        for (String authority : authorities) {
+            Supplier<Boolean> supplier = () -> validatePermission(authority, permissions);
+            return CompletableFuture.supplyAsync(supplier).join();
+        }
+        return false;
+    }
+
+    private boolean validatePermission(String roleId, String... permissions) {
+        val list = JsonUtils.parseArray(redisService.getString("matrix:" + roleId), new TypeReference<String>() {
+        });
         val tmpAuthorities = Arrays.asList(permissions[0].split(","));
-        return tmpAuthorities.stream().anyMatch(permissionsInDb::contains);
+        return tmpAuthorities.stream().anyMatch(list::contains);
     }
 
     @Override
@@ -104,5 +124,20 @@ public class UserRolePermissionServiceImpl extends ServiceImpl<UserRolePermissio
     public void deleteByRoleId(String roleId) {
         val queryChain = queryChain().where(UserRolePermission::getRoleId).eq(roleId);
         LogicDeleteManager.execWithoutLogicDelete(() -> mapper.deleteByQuery(queryChain));
+    }
+
+    @Override
+    @PostConstruct
+    public void initPermissions() {
+        log.info("initPermissions");
+        val roleIds = QueryChain.of(UserRolePermission.class).select(USER_ROLE_PERMISSION.ROLE_ID).from(USER_ROLE_PERMISSION).listAs(String.class);
+        if (roleIds.isEmpty()) {
+            log.warn("no role found, skip initPermissions");
+        }
+        for (String roleId : roleIds) {
+            val userRolePermissions = QueryChain.of(UserRolePermission.class).where(UserRolePermission::getRoleId).eq(roleId).list();
+            val permissionsInDb = userRolePermissions.stream().map(UserRolePermission::getPermissionId).toList().stream().distinct().toList();
+            redisService.setString("matrix:" + roleId, JsonUtils.toJsonString(permissionsInDb));
+        }
     }
 }
