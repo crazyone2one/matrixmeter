@@ -6,12 +6,15 @@ import "./style.css";
 import vLoading from "./utils/loading";
 import naive from "./utils/naive";
 import { setupI18n } from "/@/locale";
+import 'virtual:uno.css'
+import permission from '/@/directive/permission/index.ts'
 
 const bootstrap = async () => {
   const app = createApp(App);
   app.use(router).use(naive).use(pinia);
   await setupI18n(app);
   app.directive("loading", vLoading);
+  app.directive("permission", permission);
   app.mount("#app");
 };
 

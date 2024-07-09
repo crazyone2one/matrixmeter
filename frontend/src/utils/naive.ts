@@ -36,11 +36,12 @@ import {
     NResult,
     NSelect,
     NSpace,
+    NSpin,
     NSplit,
     NTabPane,
     NTabs,
     NText,
-    NTooltip
+    NTooltip, NRadioGroup, NRadio, NDataTable
 } from "naive-ui";
 
 export default create({
@@ -83,6 +84,6 @@ export default create({
         NLoadingBarProvider,
         NNotificationProvider,
         NModalProvider,
-        NFlex, NSplit, NSelect
+        NFlex, NSplit, NSelect, NSpin, NRadioGroup, NRadio, NDataTable
     ],
 });

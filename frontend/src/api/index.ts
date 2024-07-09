@@ -11,7 +11,7 @@ import router from "/@/router";
 const {onAuthRequired, onResponseRefreshToken} = createServerTokenAuthentication({
     assignToken: method => {
         const token = getToken();
-        if (method.meta.authRole && method.meta.authRole !== 'refreshToken') {
+        if (!method.meta?.authRole && method.meta?.authRole !== 'refreshToken') {
             method.config.headers.Authorization = `Bearer ${token.accessToken}`;
         } else {
             method.config.headers.Authorization = `Bearer ${token.refreshToken}`;
