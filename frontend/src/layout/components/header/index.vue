@@ -1,43 +1,10 @@
 <script setup lang="ts">
-import {useI18n} from "/@/hooks/use-i18n.ts";
-import {useAppStore, useUserStore} from "/@/store";
-import {useRouter} from "vue-router";
+import {useAppStore} from "/@/store";
 import TopMenu from "/@/layout/components/header/TopMenu.vue";
+import PersonalMenu from "/@/layout/components/header/PersonalMenu.vue";
 
-const userStore = useUserStore();
 const appStore = useAppStore();
-const router = useRouter();
-const {t} = useI18n()
-const options = [
-  {
-    label: "处理群消息 342 条",
-    key: "stmt1",
-  },
-  {
-    label: "被 @ 58 次",
-    key: "stmt2",
-  },
-  {
-    label: () => t('personal.exit'),
-    key: "stmt3",
-  },
-];
-const handleSelect = async (key: string) => {
-  switch (key) {
-    case "stmt3":
-      await userStore.logout();
-      const currentRoute = router.currentRoute.value;
-      window.$message.success(t('message.logoutSuccess'))
-      router.push({
-        name: 'login',
-        query: {
-          ...router.currentRoute.value.query,
-          redirect: currentRoute.name as string,
-        }
-      });
-      break;
-  }
-};
+
 </script>
 <template>
   <n-layout-header bordered>
@@ -56,9 +23,7 @@ const handleSelect = async (key: string) => {
     </n-split>
 
     <n-flex :size="20" align="center" style="line-height: 1">
-      <n-dropdown trigger="hover" :options="options" @select="handleSelect">
-        <n-button>2021年 第36周</n-button>
-      </n-dropdown>
+      <personal-menu/>
     </n-flex>
   </n-layout-header>
 </template>
