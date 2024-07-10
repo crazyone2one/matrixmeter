@@ -41,7 +41,7 @@ import {
     NTabPane,
     NTabs,
     NText,
-    NTooltip, NRadioGroup, NRadio, NDataTable
+    NTooltip, NRadioGroup, NRadio, NDataTable, NFormItem, NDivider, NCheckbox
 } from "naive-ui";
 
 export default create({
@@ -84,6 +84,6 @@ export default create({
         NLoadingBarProvider,
         NNotificationProvider,
         NModalProvider,
-        NFlex, NSplit, NSelect, NSpin, NRadioGroup, NRadio, NDataTable
+        NFlex, NSplit, NSelect, NSpin, NRadioGroup, NRadio, NDataTable, NFormItem, NDivider,NCheckbox
     ],
 });

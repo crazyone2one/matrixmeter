@@ -1,43 +1,43 @@
 <script setup lang="ts">
-import { NSpin } from "naive-ui";
+import {NSpin} from "naive-ui";
 
 const props = withDefaults(
-  defineProps<
-    Partial<{
-      simple: boolean; // 简单模式，没有标题和底部栏
-      title: string; // 卡片标题
-      subTitle: string; // 卡片副标题
-      hideContinue: boolean; // 隐藏保存并继续创建按钮
-      hideFooter: boolean; // 隐藏底部栏
-      loading: boolean; // 卡片 loading 状态
-      isEdit: boolean; // 是否编辑状态
-      hideBack: boolean; // 隐藏返回按钮
-      hasBreadcrumb: boolean; // 是否有面包屑，如果有面包屑，高度需要减去面包屑的高度
-      isFullscreen?: boolean; // 是否全屏
-      hideDivider?: boolean; // 是否隐藏分割线
-      handleBack: () => void; // 自定义返回按钮触发事件
-      showFullScreen: boolean; // 是否显示全屏按钮
-      saveText?: string; // 保存按钮文案
-      saveAndContinueText?: string; // 保存并继续按钮文案
-    }>
-  >(),
-  {
-    simple: false,
-    hideContinue: false,
-    hideFooter: false,
-    isEdit: false,
-    hideBack: false,
-    hasBreadcrumb: false,
-    loading: false,
-  }
+    defineProps<
+        Partial<{
+          simple: boolean; // 简单模式，没有标题和底部栏
+          title: string; // 卡片标题
+          subTitle: string; // 卡片副标题
+          hideContinue: boolean; // 隐藏保存并继续创建按钮
+          hideFooter: boolean; // 隐藏底部栏
+          loading: boolean; // 卡片 loading 状态
+          isEdit: boolean; // 是否编辑状态
+          hideBack: boolean; // 隐藏返回按钮
+          hasBreadcrumb: boolean; // 是否有面包屑，如果有面包屑，高度需要减去面包屑的高度
+          isFullscreen?: boolean; // 是否全屏
+          hideDivider?: boolean; // 是否隐藏分割线
+          handleBack: () => void; // 自定义返回按钮触发事件
+          showFullScreen: boolean; // 是否显示全屏按钮
+          saveText?: string; // 保存按钮文案
+          saveAndContinueText?: string; // 保存并继续按钮文案
+        }>
+    >(),
+    {
+      simple: false,
+      hideContinue: false,
+      hideFooter: false,
+      isEdit: false,
+      hideBack: false,
+      hasBreadcrumb: false,
+      loading: false,
+    }
 );
 </script>
 
 <template>
   <n-spin size="large" :show="loading">
     <n-card
-      embedded
-      :segmented="{
+        hoverable
+        :segmented="{
         content: true,
         footer: 'soft',
       }"
@@ -45,8 +45,8 @@ const props = withDefaults(
       <template #header v-if="!props.simple">
         <div class="card-header">
           <div
-            v-if="!props.hideBack"
-            class="back-btn flex cursor-pointer items-center rounded-full"
+              v-if="!props.hideBack"
+              class="back-btn flex cursor-pointer items-center rounded-full"
           >
             todo
           </div>
@@ -56,15 +56,15 @@ const props = withDefaults(
           </slot>
         </div>
       </template>
-      <template #header-extra> #header-extra </template>
+      <template #header-extra> #header-extra</template>
       <slot></slot>
       <!--    <template #footer >-->
       <!--      #footer-->
       <!--    </template>-->
       <template
-        #action
-        v-if="!props.hideFooter && !props.simple"
-        class="card-footer fixed flex justify-between bg-white"
+          #action
+          v-if="!props.hideFooter && !props.simple"
+          class="card-footer fixed flex justify-between bg-white"
       >
         <div class="ml-0 mr-auto">
           <slot name="footerLeft"></slot>
@@ -84,9 +84,9 @@ const props = withDefaults(
               {{
                 props.saveText ||
                 $t(
-                  props.isEdit
-                    ? "mscard.defaultUpdate"
-                    : "mscard.defaultConfirm"
+                    props.isEdit
+                        ? "mscard.defaultUpdate"
+                        : "mscard.defaultConfirm"
                 )
               }}
             </n-button>

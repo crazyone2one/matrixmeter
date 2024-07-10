@@ -1,0 +1,164 @@
+<script setup lang="ts">
+import {NSplit} from 'naive-ui'
+import {ref, watch} from "vue";
+
+export type Direction = 'horizontal' | 'vertical';
+const props = withDefaults(
+    defineProps<{
+      size?: number | string; // 左侧宽度/顶部容器高度。expandDirection为 right 时，size 也是左侧容器宽度，所以想要缩小右侧容器宽度只需要将 size 调大即可
+      min?: number | string;
+      max?: number | string;
+      direction?: Direction;
+      expandDirection?: 'left' | 'right' | 'top'; // TODO: 未实现 bottom，有场景再补充。目前默认水平是 left，垂直是 top
+      disabled?: boolean; // 是否禁用
+      firstContainerClass?: string; // first容器类名
+      secondContainerClass?: string; // second容器类名
+    }>(),
+    {
+      size: '300px',
+      min: '300px',
+      max: 0.5,
+      direction: 'horizontal',
+      expandDirection: 'left',
+    }
+);
+const emit = defineEmits(['update:size', 'expandChange']);
+
+const innerSize = ref(props.size || '300px');
+const initialSize = props.size || '300px';
+const isExpanded = ref(true);
+const isExpandAnimating = ref(false); // 控制动画类
+function expand(size?: string | number) {
+  isExpandAnimating.value = true;
+  isExpanded.value = true;
+  innerSize.value = size || initialSize || '300px'; // 按初始化的 size 展开，无论是水平还是垂直，都是宽度/高度
+  emit('expandChange', true);
+  // 动画结束，去掉动画类
+  setTimeout(() => {
+    isExpandAnimating.value = false;
+  }, 300);
+}
+
+function collapse(size?: string | number) {
+  isExpandAnimating.value = true;
+  isExpanded.value = false;
+  innerSize.value = props.expandDirection === 'right' ? 1 : size || '0px'; // expandDirection为 right 时，收起即为把左侧容器宽度提到 100%
+  emit('expandChange', false);
+  // 动画结束，去掉动画类
+  setTimeout(() => {
+    isExpandAnimating.value = false;
+  }, 300);
+}
+
+function changeExpand() {
+  if (isExpanded.value) {
+    collapse();
+  } else {
+    expand();
+  }
+}
+
+defineExpose({
+  expand,
+  collapse,
+});
+watch(
+    () => props.size,
+    (val) => {
+      // if (val !== undefined) {
+      //   innerSize.value = val;
+      // }
+      innerSize.value = val;
+    }
+);
+
+watch(
+    () => innerSize.value,
+    (val) => {
+      emit('update:size', val);
+    }
+);
+</script>
+
+<template>
+  <n-split v-model:size="innerSize"
+           :min="props.min"
+           :max="props.max"
+           :class="[
+      'h-full',
+      'ms-split-box-second',
+      isExpanded ? '' : 'expanded-panel',
+      isExpandAnimating ? 'animating' : '',
+      props.direction === 'vertical' ? 'ms-split-box--vertical' : '',
+    ]"
+           :direction="props.direction"
+           :disabled="props.disabled || !isExpanded">
+    <template #1>
+      <div :class="`ms-split-box ${props.direction === 'horizontal' ? 'ms-split-box--left' : 'ms-split-box--top'} ${
+          props.disabled && props.direction === 'horizontal' ? 'border-r border-[var(--color-text-n8)]' : ''
+        } ${props.firstContainerClass || ''}`">
+        <div
+            v-if="props.direction === 'horizontal' && props.expandDirection === 'right' && !props.disabled"
+            class="absolute right-0 z-40 h-full w-[12px]"
+        >
+          <div class="expand-icon expand-icon--left" @click="() => changeExpand()">
+            <n-icon class="!w-auto" size="9">
+              <div :class="isExpanded ? 'icon-icon_up-left_outlined' : 'icon-icon_down-right_outlined'"/>
+            </n-icon>
+          </div>
+        </div>
+        <slot name="first"></slot>
+      </div>
+    </template>
+    <template #resize-trigger>
+      <div :class="props.direction === 'horizontal' ? 'horizontal-expand-line' : 'vertical-expand-line'">
+        <div v-if="isExpanded" class="expand-color-line"></div>
+      </div>
+    </template>
+    <template #2>
+      <div class="ms-split-box-second">
+        <div
+            v-if="props.direction === 'horizontal' && props.expandDirection === 'left' && !props.disabled"
+            class="absolute h-full w-[12px]"
+        >
+          <div class="expand-icon" @click="() => changeExpand()">
+            <n-icon class="!w-auto" size="9">
+              <div :class="isExpanded ? 'icon-icon_up-left_outlined' : 'icon-icon_down-right_outlined'"/>
+            </n-icon>
+          </div>
+        </div>
+        <div
+            :class="`ms-split-box ${props.direction === 'horizontal' ? 'ms-split-box--right' : 'ms-split-box--bottom'} ${
+            props.secondContainerClass
+          }`"
+        >
+          <slot name="second"></slot>
+        </div>
+      </div>
+    </template>
+  </n-split>
+</template>
+
+<style scoped>
+.expanded-panel {
+  :deep(.arco-split-pane) {
+    @apply relative overflow-hidden;
+  }
+}
+
+:deep(.arco-split-pane) {
+  @apply relative overflow-hidden;
+}
+
+.animating {
+  :deep(.arco-split-pane) {
+    @apply relative overflow-hidden;
+
+    transition: flex 0.3s ease;
+  }
+}
+.ms-split-box--left {
+  width: calc(v-bind(innerSize) + 7px);
+}
+
+</style>
