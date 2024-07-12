@@ -2,7 +2,7 @@
 import {useRequest} from "alova/client";
 import {computed, inject, ref} from "vue";
 import {CurrentUserGroupItem, PopVisible, UserGroupItem,} from "/@/api/interface/setting/user-group.ts";
-import {getUserGroupList} from "/@/api/modules/setting/user-group.ts";
+import {deleteOrgUserGroup, deleteUserGroup, getUserGroupList} from "/@/api/modules/setting/user-group.ts";
 import MmIcon from "/@/components/icon/index.vue";
 import CreateUserGroupPopup from "/@/components/user-group-comp/CreateOrUpdateUserGroup.vue";
 import {AuthScopeEnum} from "/@/enums/commonEnum.ts";
@@ -174,6 +174,37 @@ const handleMoreAction = (item: ActionsItem, id: string, authScope: AuthScopeEnu
   const tmpObj = userGroupList.value.filter((ele) => ele.id === id)[0];
   if (item.eventTag === 'rename') {
     popVisible.value[id] = {visible: true, authScope, defaultName: tmpObj.name, id};
+  }
+  if (item.eventTag === 'delete') {
+    let content = '';
+    switch (authScope) {
+      case AuthScopeEnum.SYSTEM:
+        content = t('system.userGroup.beforeDeleteUserGroup');
+        break;
+      case AuthScopeEnum.ORGANIZATION:
+        content = t('org.userGroup.beforeDeleteUserGroup');
+        break;
+      default:
+        content = t('project.userGroup.beforeDeleteUserGroup');
+        break;
+    }
+    window.$dialog.error({
+      title: t('system.userGroup.isDeleteUserGroup', {name: tmpObj.name}),
+      content,
+      positiveText: t('system.userGroup.confirmDelete'),
+      negativeText: t('system.userGroup.cancel'),
+      maskClosable: false,
+      async onPositiveClick() {
+        if (systemType === AuthScopeEnum.SYSTEM) {
+          await deleteUserGroup(id);
+        }
+        if (systemType === AuthScopeEnum.ORGANIZATION) {
+          await deleteOrgUserGroup(id);
+        }
+        window.$message.error(t('system.user.deleteUserSuccess'))
+        await initData();
+      },
+    })
   }
 }
 defineExpose({

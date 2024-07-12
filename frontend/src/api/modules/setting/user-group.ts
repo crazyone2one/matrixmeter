@@ -114,3 +114,14 @@ export const updateOrAddUserGroup = (param: SystemUserGroupParams) =>
  */
 export const updateOrAddOrgUserGroup = (param: OrgUserGroupParams) =>
     alovaInstance.Post<UserGroupItem>(param.id ? ugUrl.updateOrgUserGroupU : ugUrl.addOrgUserGroupU, param)
+
+/**
+ * 系统-删除用户组
+ * @param id
+ */
+export const deleteUserGroup = (id: string) => alovaInstance.Get<UserGroupAuthSetting[]>(`${ugUrl.deleteUserGroupU}${id}`)
+/**
+ * 组织-删除用户组
+ * @param id
+ */
+export const deleteOrgUserGroup = (id: string) => alovaInstance.Get<UserGroupAuthSetting[]>(`${ugUrl.deleteOrgUserGroupU}${id}`)
