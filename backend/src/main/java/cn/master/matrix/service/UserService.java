@@ -47,4 +47,6 @@ public interface UserService extends IService<User> {
     List<UserExtendDTO> getMemberOption(String sourceId, String keyword);
 
     List<User> getUserList(String keyword);
+
+    void autoSwitch(UserDTO user);
 }

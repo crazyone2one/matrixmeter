@@ -67,7 +67,7 @@ function travel(_route: RouteRecordRaw[], nodes: MenuOption[] = []) {
                 ? t(meta?.locale as string)
                 : renderRouterLink(String(name), meta?.locale as string),
         icon: () => h(NIcon, null, {
-          default: () => h("div", {class: "i-matrix:" + meta?.icon}),
+          default: () => h("div", {class: meta?.icon}),
         }),
       };
       if (children?.length) {

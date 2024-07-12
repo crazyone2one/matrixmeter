@@ -10,7 +10,7 @@ const Setting: AppRouteRecordRaw = {
   meta: {
     locale: "menu.settings",
     collapsedLocale: "menu.settingsShort",
-    icon: "setting",
+    icon: "i-mdi-cogs",
     order: 8,
     roles: [
       "SYSTEM_USER:READ",

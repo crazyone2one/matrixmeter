@@ -90,6 +90,6 @@ public class GlobalExceptionHandler {
             //.body(ResultHandler.error(MmHttpResultCode.FORBIDDEN.getCode(), e.getMessage(), getStackTraceAsString(e)));
         }
         return ResponseEntity.internalServerError()
-                .body(ResultHandler.error(MmHttpResultCode.FAILED.getCode(), e.getCause().getMessage(), getStackTraceAsString(e)));
+                .body(ResultHandler.error(MmHttpResultCode.FAILED.getCode(), e.getMessage(), getStackTraceAsString(e)));
     }
 }

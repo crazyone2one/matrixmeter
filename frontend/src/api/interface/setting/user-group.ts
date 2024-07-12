@@ -6,11 +6,13 @@ export interface UserGroupListItem {
     title?: string;
     authScope: string;
 }
+
 export interface UserOption {
     id: number;
     name: string;
     email: string;
 }
+
 export interface CustomMoreActionItem {
     eventKey: string;
     name: string;
@@ -50,6 +52,7 @@ export interface UserGroupItem {
     // 自定义排序
     pos: number;
 }
+
 export interface CurrentUserGroupItem {
     // 组ID
     id: string;
@@ -69,6 +72,7 @@ export interface SystemUserGroupParams {
     scopeId?: string; // 组织ID
     type?: string; // 组类型：SYSTEM | PROJECT | ORGANIZATION
 }
+
 export interface OrgUserGroupParams {
     id?: string; // 组ID
     name: string;
@@ -125,10 +129,12 @@ export interface AuthTableItem {
     isPersonal?: boolean;
     indeterminate?: boolean;
 }
+
 export interface SavePermissions {
     id: string;
     enable: boolean;
 }
+
 export interface SaveGlobalUSettingData {
     userRoleId: string;
     permissions: SavePermissions[];
@@ -150,6 +156,7 @@ export interface UserTableItem {
     createUser: string;
     updateUser: string;
     deleted: boolean;
+
     [key: string]: string | boolean | number;
 }
 
@@ -161,6 +168,7 @@ export interface PopVisibleItem {
     authScope: AuthScopeEnum;
     defaultName: string;
 }
+
 export interface PopVisible {
     [key: string]: PopVisibleItem;
 }

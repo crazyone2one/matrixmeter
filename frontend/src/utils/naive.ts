@@ -7,11 +7,15 @@ import {
     NBreadcrumbItem,
     NButton,
     NCard,
+    NCheckbox,
     NConfigProvider,
+    NDataTable,
     NDialogProvider,
+    NDivider,
     NDropdown,
     NFlex,
     NForm,
+    NFormItem,
     NFormItemRow,
     NGlobalStyle,
     NH1,
@@ -29,10 +33,13 @@ import {
     NLoadingBarProvider,
     NMenu,
     NMessageProvider,
+    NModal,
     NModalProvider,
     NNotificationProvider,
     NP,
     NPopover,
+    NRadio,
+    NRadioGroup,
     NResult,
     NSelect,
     NSpace,
@@ -41,7 +48,7 @@ import {
     NTabPane,
     NTabs,
     NText,
-    NTooltip, NRadioGroup, NRadio, NDataTable, NFormItem, NDivider, NCheckbox
+    NTooltip
 } from "naive-ui";
 
 export default create({
@@ -84,6 +91,6 @@ export default create({
         NLoadingBarProvider,
         NNotificationProvider,
         NModalProvider,
-        NFlex, NSplit, NSelect, NSpin, NRadioGroup, NRadio, NDataTable, NFormItem, NDivider,NCheckbox
+        NFlex, NSplit, NSelect, NSpin, NRadioGroup, NRadio, NDataTable, NFormItem, NDivider, NCheckbox, NModal
     ],
 });

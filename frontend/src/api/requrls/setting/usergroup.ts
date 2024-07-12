@@ -15,7 +15,7 @@ export const getUsergroupInfoU = `/user/role/global/get/`;
 export const deleteUserGroupU = `/user/role/global/delete/`;
 
 /** 根据用户组获取用户列表 */
-export const postUserByUserGroupUrl = `/user/role/relation/global/list`;
+export const postUserByUserGroupUrl = `/user/role/relation/global/page`;
 /** 创建用户组添加用户 */
 export const addUserToUserGroupUrl = `/user/role/relation/global/add`;
 /** 删除用户组用户 */

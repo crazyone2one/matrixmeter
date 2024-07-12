@@ -25,6 +25,7 @@ export default defineConfig({
     presetAttributify(),
     presetIcons({
       collections: {
+        mdi: () => import('@iconify-json/mdi/icons.json').then(i => i.default),
         matrix: FileSystemIconLoader("./src/assets/icons", (svg) =>
           svg.replace(/#fff/, "currentColor")
         ),

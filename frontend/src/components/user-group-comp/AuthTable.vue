@@ -10,7 +10,7 @@ import {
   SavePermissions,
   UserGroupAuthSetting,
 } from "/@/api/interface/setting/user-group.ts";
-import {getGlobalUSetting} from "/@/api/modules/setting/user-group.ts";
+import {getGlobalUSetting, saveGlobalUSetting, saveOrgUSetting} from "/@/api/modules/setting/user-group.ts";
 import {AuthScopeEnum} from "/@/enums/commonEnum.ts";
 import {useI18n} from "/@/hooks/use-i18n.ts";
 
@@ -52,7 +52,7 @@ const systemAdminDisabled = computed(() => {
 });
 const tableData = ref<AuthTableItem[]>();
 const handleCellAuthChange = (
-    values: (string | number | boolean)[],
+    _values: (string | number | boolean)[],
     rowIndex: number,
     record: AuthTableItem,
     e: Event
@@ -321,7 +321,7 @@ const handleReset = () => {
     initData(props.current.id);
   }
 };
-const handleSave = () => {
+const handleSave = async () => {
   if (!tableData.value) return;
   const permissions: SavePermissions[] = [];
 
@@ -335,7 +335,20 @@ const handleSave = () => {
       });
     });
   });
-  console.log(permissions);
+  if (systemType === AuthScopeEnum.SYSTEM) {
+    await saveGlobalUSetting({
+      userRoleId: props.current.id,
+      permissions,
+    });
+  } else if (systemType === AuthScopeEnum.ORGANIZATION) {
+    await saveOrgUSetting({
+      userRoleId: props.current.id,
+      permissions,
+    });
+  }
+  canSave.value = false;
+  window.$message.success(t('common.saveSuccess'));
+  await initData(props.current.id);
 };
 defineExpose({
   canSave,

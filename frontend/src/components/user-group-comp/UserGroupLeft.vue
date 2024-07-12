@@ -1,19 +1,16 @@
 <script setup lang="ts">
-import { useRequest } from "alova/client";
-import { computed, inject, ref } from "vue";
-import {
-  CurrentUserGroupItem,
-  PopVisible,
-  UserGroupItem,
-} from "/@/api/interface/setting/user-group.ts";
-import { getUserGroupList } from "/@/api/modules/setting/user-group.ts";
+import {useRequest} from "alova/client";
+import {computed, inject, ref} from "vue";
+import {CurrentUserGroupItem, PopVisible, UserGroupItem,} from "/@/api/interface/setting/user-group.ts";
+import {getUserGroupList} from "/@/api/modules/setting/user-group.ts";
 import MmIcon from "/@/components/icon/index.vue";
 import CreateUserGroupPopup from "/@/components/user-group-comp/CreateOrUpdateUserGroup.vue";
-import { AuthScopeEnum } from "/@/enums/commonEnum.ts";
-import { useI18n } from "/@/hooks/use-i18n.ts";
-import { hasAnyPermission } from "/@/utils/permission.ts";
+import {AuthScopeEnum} from "/@/enums/commonEnum.ts";
+import {useI18n} from "/@/hooks/use-i18n.ts";
+import {hasAnyPermission} from "/@/utils/permission.ts";
+import AddUserModal from "/@/components/user-group-comp/AddUserModal.vue";
 
-const { t } = useI18n();
+const {t} = useI18n();
 const systemType = inject<AuthScopeEnum>("systemType");
 const props = defineProps<{
   addPermission: string[];
@@ -33,13 +30,13 @@ const currentItem = ref<CurrentUserGroupItem>({
 });
 const showSystem = computed(() => systemType === AuthScopeEnum.SYSTEM);
 const showOrg = computed(
-  () =>
-    systemType === AuthScopeEnum.SYSTEM ||
-    systemType === AuthScopeEnum.ORGANIZATION
+    () =>
+        systemType === AuthScopeEnum.SYSTEM ||
+        systemType === AuthScopeEnum.ORGANIZATION
 );
 const showProject = computed(
-  () =>
-    systemType === AuthScopeEnum.SYSTEM || systemType === AuthScopeEnum.PROJECT
+    () =>
+        systemType === AuthScopeEnum.SYSTEM || systemType === AuthScopeEnum.PROJECT
 );
 // 用户组列表
 const userGroupList = ref<UserGroupItem[]>([]);
@@ -61,6 +58,7 @@ const systemUserGroupVisible = ref(false);
 const orgUserGroupVisible = ref(false);
 // 项目用户创建用户组visible
 const projectUserGroupVisible = ref(false);
+const userModalVisible = ref(false);
 
 const handleCreateUG = (scoped: AuthScopeEnum) => {
   if (scoped === AuthScopeEnum.SYSTEM) {
@@ -72,8 +70,8 @@ const handleCreateUG = (scoped: AuthScopeEnum) => {
   }
 };
 const handleListItemClick = (element: UserGroupItem) => {
-  const { id, name, type, internal } = element;
-  currentItem.value = { id, name, type, internal };
+  const {id, name, type, internal} = element;
+  currentItem.value = {id, name, type, internal};
   currentId.value = id;
   emit("handleSelect", element);
 };
@@ -112,13 +110,19 @@ const systemMoreAction = [
     permission: ["SYSTEM_USER_ROLE:READ+DELETE"],
   },
 ];
-const handleAddMember = () => {};
-const { send } = useRequest(() => getUserGroupList(), { immediate: false });
+const handleAddMember = () => userModalVisible.value = true;
+const handleAddUserCancel = (shouldSearch: boolean) => {
+  userModalVisible.value = false;
+  if (shouldSearch) {
+    emit('addUserSuccess', currentId.value);
+  }
+}
+const {send} = useRequest(() => getUserGroupList(), {immediate: false});
 const initData = async (id?: string, isSelect = true) => {
   let res: UserGroupItem[] = [];
   if (
-    systemType === AuthScopeEnum.SYSTEM &&
-    hasAnyPermission(["SYSTEM_USER_ROLE:READ"])
+      systemType === AuthScopeEnum.SYSTEM &&
+      hasAnyPermission(["SYSTEM_USER_ROLE:READ"])
   ) {
     res = await send();
   }
@@ -158,47 +162,44 @@ defineExpose({
 <template>
   <div class="flex flex-col px-[16px] pb-[16px]">
     <div class="sticky top-0 z-[999] pb-[8px] pt-[16px]">
-      <n-input :placeholder="$t('system.userGroup.searchHolder')" />
+      <n-input :placeholder="$t('system.userGroup.searchHolder')"/>
     </div>
     <div
-      v-if="showSystem"
-      v-permission="['SYSTEM_USER_ROLE:READ']"
-      class="mt-2"
+        v-if="showSystem"
+        v-permission="['SYSTEM_USER_ROLE:READ']"
+        class="mt-2"
     >
       <div class="flex items-center justify-between px-[4px] py-[7px]">
         <div class="flex flex-row items-center gap-1">
           <mm-icon
-            v-if="systemToggle"
-            class="cursor-pointer"
-            :size="20"
-            @click="systemToggle = false"
-            type="expand-down"
+              v-if="systemToggle"
+              class="cursor-pointer"
+              @click="systemToggle = false"
+              type="i-mdi-arrow-expand-down"
           />
           <mm-icon
-            v-else
-            class="cursor-pointer"
-            :size="20"
-            @click="systemToggle = true"
-            type="expand-right"
+              v-else
+              class="cursor-pointer"
+              @click="systemToggle = true"
+              type="i-mdi-arrow-expand-right"
           />
           <div class="text-[14px]">
             {{ $t("system.userGroup.systemUserGroup") }}
           </div>
         </div>
         <create-user-group-popup
-          :visible="systemUserGroupVisible"
-          :list="systemUserGroupList"
-          :auth-scope="AuthScopeEnum.SYSTEM"
-          @cancel="systemUserGroupVisible = false"
+            :visible="systemUserGroupVisible"
+            :list="systemUserGroupList"
+            :auth-scope="AuthScopeEnum.SYSTEM"
+            @cancel="systemUserGroupVisible = false"
         >
           <n-tooltip trigger="hover" placement="right">
             <template #trigger>
               <mm-icon
-                v-permission="props.addPermission"
-                :size="20"
-                type="expand-right"
-                class="cursor-pointer"
-                @click="handleCreateUG(AuthScopeEnum.SYSTEM)"
+                  v-permission="props.addPermission"
+                  type="i-mdi-plus-circle-outline"
+                  class="cursor-pointer"
+                  @click="handleCreateUG(AuthScopeEnum.SYSTEM)"
               />
             </template>
             {{ `创建${$t("system.userGroup.systemUserGroup")}` }}
@@ -208,68 +209,65 @@ defineExpose({
       <transition>
         <div v-if="systemToggle">
           <div
-            v-for="element in systemUserGroupList"
-            :key="element.id"
-            class="list-item"
-            :class="{ 'bg-lime-200': element.id === currentId }"
-            @click="handleListItemClick(element)"
+              v-for="element in systemUserGroupList"
+              :key="element.id"
+              class="list-item"
+              :class="{ 'bg-lime-200': element.id === currentId }"
+              @click="handleListItemClick(element)"
           >
             <create-user-group-popup
-              :list="systemUserGroupList"
-              :auth-scope="popVisible[element.id].authScope"
-              :visible="popVisible[element.id].visible"
+                :list="systemUserGroupList"
+                :auth-scope="popVisible[element.id].authScope"
+                :visible="popVisible[element.id].visible"
             >
               <div
-                class="flex max-w-[100%] grow flex-row items-center justify-between"
+                  class="flex max-w-[100%] grow flex-row items-center justify-between"
               >
                 {{ element.name }}
                 <div
-                  v-if="
+                    v-if="
                     element.type === systemType ||
                     (isSystemShowAll &&
                       !element.internal &&
                       (element.scopeId !== 'global' || !isGlobalDisable) &&
                       systemMoreAction.length > 0)
                   "
-                  class="list-item-action flex flex-row items-center gap-[8px] opacity-0"
-                  :class="{ '!opacity-100': element.id === currentId }"
+                    class="list-item-action flex flex-row items-center gap-[8px] opacity-0"
+                    :class="{ '!opacity-100': element.id === currentId }"
                 >
                   <div v-if="element.type === systemType" class="icon-button">
                     <mm-icon
-                      v-permission="props.updatePermission"
-                      type="plus-circle"
-                      size="16"
-                      @click="handleAddMember"
+                        v-permission="props.updatePermission"
+                        type="i-mdi-plus-circle-outline"
+                        @click="handleAddMember"
                     />
                   </div>
                 </div>
               </div>
             </create-user-group-popup>
           </div>
-          <n-divider />
+          <n-divider/>
         </div>
       </transition>
     </div>
     <div
-      v-if="showOrg"
-      v-permission="['ORGANIZATION_USER_ROLE:READ']"
-      class="mt-2"
+        v-if="showOrg"
+        v-permission="['ORGANIZATION_USER_ROLE:READ']"
+        class="mt-2"
     >
       <div class="flex items-center justify-between px-[4px] py-[7px]">
         <div class="flex flex-row items-center gap-1">
           <mm-icon
-            v-if="orgToggle"
-            class="cursor-pointer"
-            :size="20"
-            @click="orgToggle = false"
-            type="expand-down"
+              v-if="orgToggle"
+              class="cursor-pointer"
+              @click="orgToggle = false"
+              type="i-mdi-arrow-expand-down"
           />
           <mm-icon
-            v-else
-            class="cursor-pointer"
-            :size="20"
-            @click="orgToggle = true"
-            type="expand-right"
+              v-else
+              class="cursor-pointer"
+              @click="orgToggle = true"
+              type="i-mdi-arrow-expand-right"
           />
           <div class="text-[14px]">
             {{ $t("system.userGroup.orgUserGroup") }}
@@ -281,18 +279,16 @@ defineExpose({
       <div class="flex items-center justify-between px-[4px] py-[7px]">
         <div class="flex flex-row items-center gap-1">
           <mm-icon
-            v-if="projectToggle"
-            class="cursor-pointer"
-            :size="20"
-            @click="projectToggle = false"
-            type="expand-down"
+              v-if="projectToggle"
+              class="cursor-pointer"
+              @click="projectToggle = false"
+              type="i-mdi-arrow-expand-down"
           />
           <mm-icon
-            v-else
-            class="cursor-pointer"
-            :size="20"
-            @click="projectToggle = true"
-            type="expand-right"
+              v-else
+              class="cursor-pointer"
+              @click="projectToggle = true"
+              type="i-mdi-arrow-expand-right"
           />
           <div class="text-[14px]">
             {{ $t("system.userGroup.projectUserGroup") }}
@@ -301,6 +297,7 @@ defineExpose({
       </div>
     </div>
   </div>
+  <add-user-modal :visible="userModalVisible" :current-id="currentItem.id" @cancel="handleAddUserCancel"/>
 </template>
 
 <style scoped>
@@ -309,6 +306,7 @@ defineExpose({
   height: 15px;
 
   @apply flex cursor-pointer items-center;
+
   &:hover .list-item-action {
     opacity: 1;
   }

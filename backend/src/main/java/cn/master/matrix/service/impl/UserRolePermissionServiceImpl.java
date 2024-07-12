@@ -77,7 +77,7 @@ public class UserRolePermissionServiceImpl extends ServiceImpl<UserRolePermissio
                 .toList();
         for (String authority : authorities) {
             Supplier<Boolean> supplier = () -> validatePermission(authority, permissions);
-            return CompletableFuture.supplyAsync(supplier).join();
+            return CompletableFuture.supplyAsync(supplier).join() || authorities.contains("admin");
         }
         return false;
     }

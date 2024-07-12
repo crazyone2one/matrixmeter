@@ -257,6 +257,11 @@ public class BaseUserRoleRelationServiceImpl extends ServiceImpl<UserRoleRelatio
         return returnMap;
     }
 
+    @Override
+    public boolean isSuperUser(String userId) {
+        return queryChain().where(USER_ROLE_RELATION.USER_ID.eq(userId).and(USER_ROLE_RELATION.ROLE_ID.eq("admin"))).exists();
+    }
+
     private List<UserExcludeOptionDTO> getExcludeSelectOptionWithLimit(String keyword) {
         return QueryChain.of(User.class)
                 .select(USER.ID, USER.NAME, USER.EMAIL).from(USER)

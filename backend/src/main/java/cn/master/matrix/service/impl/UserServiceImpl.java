@@ -1,8 +1,7 @@
 package cn.master.matrix.service.impl;
 
-import cn.master.matrix.entity.User;
-import cn.master.matrix.entity.UserRole;
-import cn.master.matrix.entity.UserRoleRelation;
+import cn.master.matrix.constants.UserRoleType;
+import cn.master.matrix.entity.*;
 import cn.master.matrix.exception.CustomException;
 import cn.master.matrix.mapper.UserMapper;
 import cn.master.matrix.payload.dto.TableBatchProcessDTO;
@@ -20,6 +19,7 @@ import cn.master.matrix.util.Translator;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.query.QueryMethods;
+import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -37,6 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.master.matrix.entity.table.OrganizationTableDef.ORGANIZATION;
+import static cn.master.matrix.entity.table.ProjectTableDef.PROJECT;
 import static cn.master.matrix.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
 import static cn.master.matrix.entity.table.UserTableDef.USER;
 
@@ -89,9 +91,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public Page<UserTableResponse> page(BasePageRequest request) {
         val page = queryChain()
                 .where(USER.ID.eq(request.getKeyword())
-                        .or(USER.EMAIL.eq(request.getKeyword()))
-                        .or(USER.NAME.eq(request.getKeyword()))
-                        .or(USER.PHONE.eq(request.getKeyword())))
+                        .or(USER.EMAIL.like(request.getKeyword()))
+                        .or(USER.NAME.like(request.getKeyword()))
+                        .or(USER.PHONE.like(request.getKeyword())))
                 .orderBy(USER.CREATE_TIME.desc(), USER.ID.desc())
                 .pageAs(new Page<>(request.getPageNum(), request.getPageSize()), UserTableResponse.class);
         val userList = page.getRecords();
@@ -238,6 +240,231 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public List<User> getUserList(String keyword) {
         return queryChain().where(USER.NAME.like(keyword).or(USER.EMAIL.like(keyword))).list();
+    }
+
+    @Override
+    public void autoSwitch(UserDTO user) {
+        // 判断是否是系统管理员
+        if (isSystemAdmin(user)) {
+            return;
+        }
+        // 用户有 last_project_id 权限
+        if (hasLastProjectPermission(user)) {
+            return;
+        }
+        // 用户有 last_organization_id 权限
+        if (hasLastOrganizationPermission(user)) {
+            return;
+        }
+        // 判断其他权限
+        checkNewOrganizationAndProject(user);
+    }
+
+    private void checkNewOrganizationAndProject(UserDTO user) {
+        List<UserRoleRelation> userRoleRelations = user.getUserRoleRelations();
+        List<String> projectRoleIds = user.getUserRoles()
+                .stream().filter(ug -> StringUtils.equals(ug.getType(), UserRoleType.PROJECT.name()))
+                .map(UserRole::getId)
+                .toList();
+        List<UserRoleRelation> project = userRoleRelations.stream().filter(ug -> projectRoleIds.contains(ug.getRoleId()))
+                .toList();
+        if (CollectionUtils.isEmpty(project)) {
+            List<String> organizationIds = user.getUserRoles()
+                    .stream()
+                    .filter(ug -> StringUtils.equals(ug.getType(), UserRoleType.ORGANIZATION.name()))
+                    .map(UserRole::getId)
+                    .toList();
+            List<UserRoleRelation> organizations = userRoleRelations.stream().filter(ug -> organizationIds.contains(ug.getRoleId()))
+                    .toList();
+            if (CollectionUtils.isNotEmpty(organizations)) {
+                //获取所有的组织
+                List<String> orgIds = organizations.stream().map(UserRoleRelation::getSourceId).toList();
+                val organizationsList = QueryChain.of(Organization.class).where(ORGANIZATION.ID.in(orgIds)
+                        .and(ORGANIZATION.ENABLE.eq(true))).list();
+                if (CollectionUtils.isNotEmpty(organizationsList)) {
+                    String wsId = organizationsList.get(0).getId();
+                    switchUserResource(wsId, user);
+                }
+            } else {
+                UpdateChain.of(mapper).set(User::getLastProjectId, StringUtils.EMPTY)
+                        .set(User::getLastOrganizationId, StringUtils.EMPTY)
+                        .where(User::getId).eq(user.getId())
+                        .update();
+            }
+        } else {
+            UserRoleRelation userRoleRelation = project.stream()
+                    .filter(p -> StringUtils.isNotBlank(p.getSourceId()))
+                    .toList().get(0);
+            String projectId = userRoleRelation.getSourceId();
+
+            val p = QueryChain.of(Project.class).where(PROJECT.ID.eq(projectId)).one();
+            UpdateChain.of(mapper).set(User::getLastProjectId, projectId)
+                    .set(User::getLastOrganizationId, p.getOrganizationId())
+                    .where(User::getId).eq(user.getId())
+                    .update();
+        }
+    }
+
+    private void switchUserResource(String sourceId, UserDTO userDTO) {
+        UserDTO user = getUserDTO(userDTO.getId());
+        User newUser = new User();
+        user.setLastOrganizationId(sourceId);
+        userDTO.setLastOrganizationId(sourceId);
+        user.setLastProjectId(StringUtils.EMPTY);
+        List<Project> projects = getProjectListByWsAndUserId(userDTO.getId(), sourceId);
+        if (CollectionUtils.isNotEmpty(projects)) {
+            user.setLastProjectId(projects.get(0).getId());
+        }
+        BeanUtils.copyProperties(user, newUser);
+        mapper.update(newUser);
+    }
+
+    private List<Project> getProjectListByWsAndUserId(String userId, String orgId) {
+        val projects = QueryChain.of(Project.class).where(PROJECT.ORGANIZATION_ID.eq(orgId)
+                .and(PROJECT.ENABLE.eq(true))).list();
+        val userRoleRelations = QueryChain.of(UserRoleRelation.class).where(USER_ROLE_RELATION.USER_ID.eq(userId)).list();
+        List<Project> projectList = new ArrayList<>();
+        userRoleRelations.forEach(userRoleRelation -> projects.forEach(project -> {
+            if (StringUtils.equals(userRoleRelation.getSourceId(), project.getId())) {
+                if (!projectList.contains(project)) {
+                    projectList.add(project);
+                }
+            }
+        }));
+        return projectList;
+    }
+
+    private boolean hasLastOrganizationPermission(UserDTO user) {
+        if (StringUtils.isNotBlank(user.getLastOrganizationId())) {
+            val organizations = QueryChain.of(Organization.class).where(ORGANIZATION.ID.eq(user.getLastOrganizationId())
+                    .and(ORGANIZATION.ENABLE.eq(true))).list();
+            if (CollectionUtils.isEmpty(organizations)) {
+                return false;
+            }
+            List<UserRoleRelation> userRoleRelations = user.getUserRoleRelations().stream()
+                    .filter(ug -> StringUtils.equals(user.getLastOrganizationId(), ug.getSourceId()))
+                    .toList();
+
+            if (CollectionUtils.isNotEmpty(userRoleRelations)) {
+                val projects = QueryChain.of(Project.class).where(PROJECT.ORGANIZATION_ID.eq(user.getLastOrganizationId())
+                        .and(PROJECT.ENABLE.eq(true))).list();
+                // 组织下没有项目
+                if (CollectionUtils.isEmpty(projects)) {
+                    UpdateChain.of(mapper).set(User::getLastProjectId, StringUtils.EMPTY)
+                            .where(User::getId).eq(user.getId())
+                            .update();
+                    return true;
+                }
+                // 组织下有项目，选中有权限的项目
+                List<String> projectIds = projects.stream()
+                        .map(Project::getId)
+                        .toList();
+                List<UserRoleRelation> roleRelations = user.getUserRoleRelations();
+                List<String> projectRoleIds = user.getUserRoles()
+                        .stream().filter(ug -> StringUtils.equals(ug.getType(), UserRoleType.PROJECT.name()))
+                        .map(UserRole::getId)
+                        .toList();
+                List<String> projectIdsWithPermission = roleRelations.stream().filter(ug -> projectRoleIds.contains(ug.getRoleId()))
+                        .map(UserRoleRelation::getSourceId)
+                        .filter(StringUtils::isNotBlank)
+                        .filter(projectIds::contains)
+                        .toList();
+                List<String> intersection = projectIds.stream().filter(projectIdsWithPermission::contains).toList();
+                // 当前组织下的所有项目都没有权限
+                if (CollectionUtils.isEmpty(intersection)) {
+                    UpdateChain.of(mapper).set(User::getLastProjectId, StringUtils.EMPTY)
+                            .where(User::getId).eq(user.getId())
+                            .update();
+                    return true;
+                }
+                Optional<Project> first = projects.stream().filter(p -> StringUtils.equals(intersection.get(0), p.getId())).findFirst();
+                if (first.isPresent()) {
+                    Project project = first.get();
+                    String wsId = project.getOrganizationId();
+                    UpdateChain.of(mapper).set(User::getLastProjectId, project.getId())
+                            .set(User::getLastOrganizationId, wsId)
+                            .where(User::getId).eq(user.getId())
+                            .update();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasLastProjectPermission(UserDTO user) {
+        if (StringUtils.isNotBlank(user.getLastProjectId())) {
+            val userRoleRelations = user.getUserRoleRelations().stream()
+                    .filter(ur -> StringUtils.equals(user.getLastProjectId(), ur.getSourceId()))
+                    .toList();
+            if (CollectionUtils.isNotEmpty(userRoleRelations)) {
+                val projects = QueryChain.of(Project.class).where(PROJECT.ID.eq(user.getLastProjectId())
+                        .and(PROJECT.ENABLE.eq(true))).list();
+                if (CollectionUtils.isNotEmpty(projects)) {
+                    val project = projects.get(0);
+                    if (StringUtils.equals(project.getOrganizationId(), user.getLastOrganizationId())) {
+                        return true;
+                    }
+                    UpdateChain.of(mapper).set(User::getLastOrganizationId, project.getOrganizationId())
+                            .where(User::getId).eq(user.getId())
+                            .update();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isSystemAdmin(UserDTO user) {
+        if (userRoleRelationService.isSuperUser(user.getId())) {
+            // 如果是系统管理员，判断是否有项目权限
+            if (StringUtils.isNotBlank(user.getLastProjectId())) {
+                val projects = QueryChain.of(Project.class).where(PROJECT.ID.eq(user.getLastProjectId())
+                        .and(PROJECT.ENABLE.eq(true))).list();
+                if (CollectionUtils.isNotEmpty(projects)) {
+                    val project = projects.get(0);
+                    if (StringUtils.equals(project.getOrganizationId(), user.getLastOrganizationId())) {
+                        return true;
+                    }
+                    UpdateChain.of(mapper).set(User::getLastOrganizationId, project.getOrganizationId())
+                            .where(User::getId).eq(user.getId()).update();
+                    return true;
+                }
+            }
+            // 项目没有权限  则取当前组织下的第一个项目
+            if (StringUtils.isNotBlank(user.getLastOrganizationId())) {
+                val organizations = QueryChain.of(Organization.class).where(Organization::getId).eq(user.getLastOrganizationId())
+                        .and(Organization::getEnable).eq(true).list();
+                if (CollectionUtils.isNotEmpty(organizations)) {
+                    val organization = organizations.get(0);
+                    val projects = QueryChain.of(Project.class).where(Project::getOrganizationId).eq(organization.getId())
+                            .and(Project::getEnable).eq(true).list();
+                    if (CollectionUtils.isNotEmpty(projects)) {
+                        val project = projects.get(0);
+                        UpdateChain.of(mapper).set(User::getLastProjectId, project.getId())
+                                .where(User::getId).eq(user.getId()).update();
+                        return true;
+                    }
+                }
+            }
+            //项目和组织都没有权限
+            Project project = getEnableProjectAndOrganization();
+            if (Objects.nonNull(project)) {
+                UpdateChain.of(mapper).set(User::getLastProjectId, project.getId())
+                        .set(User::getLastOrganizationId, project.getOrganizationId())
+                        .where(User::getId).eq(user.getId()).update();
+                return true;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private Project getEnableProjectAndOrganization() {
+        return QueryChain.of(Project.class).select(PROJECT.ALL_COLUMNS)
+                .from(PROJECT)
+                .leftJoin(ORGANIZATION).on(PROJECT.ORGANIZATION_ID.eq(ORGANIZATION.ID))
+                .where(PROJECT.ENABLE.eq(true).and(ORGANIZATION.ENABLE.eq(true))).limit(1).one();
     }
 
     private void checkOldPassword(String id, String oldPassword) {

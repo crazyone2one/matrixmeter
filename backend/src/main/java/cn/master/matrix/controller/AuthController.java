@@ -69,7 +69,8 @@ public class AuthController {
         saveUserToken(token, refreshToken, userDetails);
         val jwtResponse = new JwtResponse(token, refreshToken);
         val userDTO = userService.getUserDTO(userDetails.getUser().getId());
-        BeanUtils.copyProperties(userDTO, jwtResponse);
+        userService.autoSwitch(userDTO);
+        BeanUtils.copyProperties(userService.getUserDTO(userDetails.getUser().getId()), jwtResponse);
         return ResponseEntity.ok(jwtResponse);
     }
 

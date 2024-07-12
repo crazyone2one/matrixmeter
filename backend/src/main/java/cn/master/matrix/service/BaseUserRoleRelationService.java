@@ -44,4 +44,6 @@ public interface BaseUserRoleRelationService extends IService<UserRoleRelation> 
     List<UserExcludeOptionDTO> getExcludeSelectOptionWithLimit(String roleId, String keyword);
 
     Map<Organization, List<Project>> selectOrganizationProjectByUserId(String userId);
+
+    boolean isSuperUser(String userId);
 }

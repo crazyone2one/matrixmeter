@@ -9,6 +9,7 @@ import {setupI18n} from "/@/locale";
 import 'virtual:uno.css'
 import permission from '/@/directive/permission/index.ts'
 import outerClick from '/@/directive/outer-click/index.ts'
+import {prettyLog} from "/@/utils/log.ts";
 
 const bootstrap = async () => {
     const app = createApp(App);
@@ -20,4 +21,7 @@ const bootstrap = async () => {
     app.mount("#app");
 };
 
-bootstrap().then(() => console.log("welcome to Matrix"));
+bootstrap().then(() => {
+    const log = prettyLog();
+    log.info("welcome to Matrix")
+});
