@@ -13,6 +13,7 @@ import cn.master.matrix.service.GlobalUserRoleService;
 import cn.master.matrix.service.UserRolePermissionService;
 import cn.master.matrix.util.Translator;
 import lombok.val;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -131,10 +132,12 @@ public class GlobalUserRoleServiceImpl extends BaseUserRoleServiceImpl implement
         if (StringUtils.isBlank(userRole.getName())) {
             return;
         }
-        queryChain().where(USER_ROLE.NAME.eq(userRole.getName())
-                        .and(USER_ROLE.SCOPE_ID.eq(UserRoleScope.GLOBAL))
-                        .and(USER_ROLE.ID.ne(userRole.getId()))).oneOpt()
-                .orElseThrow(() -> new CustomException(GLOBAL_USER_ROLE_EXIST));
+        val userRoles = queryChain().where(USER_ROLE.NAME.eq(userRole.getName())
+                .and(USER_ROLE.SCOPE_ID.eq(UserRoleScope.GLOBAL))
+                .and(USER_ROLE.ID.ne(userRole.getId()))).list();
+        if (CollectionUtils.isNotEmpty(userRoles)) {
+            throw new CustomException(GLOBAL_USER_ROLE_EXIST);
+        }
     }
 
     private int getInternal(Boolean internal) {

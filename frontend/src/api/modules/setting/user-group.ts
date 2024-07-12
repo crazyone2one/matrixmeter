@@ -1,6 +1,8 @@
 import {alovaInstance} from '/@/api/index.ts'
 import {
+    OrgUserGroupParams,
     SaveGlobalUSettingData,
+    SystemUserGroupParams,
     UserGroupAuthSetting,
     UserGroupItem,
     UserTableItem
@@ -100,3 +102,15 @@ export const addUserToUserGroup = (param: { roleId: string; userIds: string[] })
 export const addOrgUserToUserGroup = (param: { userRoleId: string; userIds: string[]; organizationId: string }) => {
     return alovaInstance.Post(ugUrl.addOrgUserToUserGroupUrl, param)
 }
+/**
+ * 系统-创建或修改用户组
+ * @param param
+ */
+export const updateOrAddUserGroup = (param: SystemUserGroupParams) =>
+    alovaInstance.Post<UserGroupItem>(param.id ? ugUrl.updateUserGroupU : ugUrl.addUserGroupU, param)
+/**
+ * 组织-创建或修改用户组
+ * @param param
+ */
+export const updateOrAddOrgUserGroup = (param: OrgUserGroupParams) =>
+    alovaInstance.Post<UserGroupItem>(param.id ? ugUrl.updateOrgUserGroupU : ugUrl.addOrgUserGroupU, param)

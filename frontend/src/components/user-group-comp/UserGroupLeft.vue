@@ -9,6 +9,8 @@ import {AuthScopeEnum} from "/@/enums/commonEnum.ts";
 import {useI18n} from "/@/hooks/use-i18n.ts";
 import {hasAnyPermission} from "/@/utils/permission.ts";
 import AddUserModal from "/@/components/user-group-comp/AddUserModal.vue";
+import MoreAction from '/@/components/more-action/index.vue'
+import {ActionsItem} from "/@/components/more-action/types.ts";
 
 const {t} = useI18n();
 const systemType = inject<AuthScopeEnum>("systemType");
@@ -47,6 +49,14 @@ const popVisible = ref<PopVisible>({});
 // 系统用户组列表
 const systemUserGroupList = computed(() => {
   return userGroupList.value.filter((ele) => ele.type === AuthScopeEnum.SYSTEM);
+});
+// 组织用户组列表
+const orgUserGroupList = computed(() => {
+  return userGroupList.value.filter((ele) => ele.type === AuthScopeEnum.ORGANIZATION);
+});
+// 项目用户组列表
+const projectUserGroupList = computed(() => {
+  return userGroupList.value.filter((ele) => ele.type === AuthScopeEnum.PROJECT);
 });
 // 组织用户组Toggle
 const orgToggle = ref(true);
@@ -117,9 +127,10 @@ const handleAddUserCancel = (shouldSearch: boolean) => {
     emit('addUserSuccess', currentId.value);
   }
 }
-const {send} = useRequest(() => getUserGroupList(), {immediate: false});
+const {send} = useRequest(() => getUserGroupList(), {immediate: false, force: true});
 const initData = async (id?: string, isSelect = true) => {
   let res: UserGroupItem[] = [];
+  console.log('111')
   if (
       systemType === AuthScopeEnum.SYSTEM &&
       hasAnyPermission(["SYSTEM_USER_ROLE:READ"])
@@ -154,6 +165,17 @@ const initData = async (id?: string, isSelect = true) => {
     popVisible.value = tmpObj;
   }
 };
+const handleCreateUserGroup = (id: string) => {
+  console.log('handleCreateUserGroup', id)
+  initData(id);
+};
+
+const handleMoreAction = (item: ActionsItem, id: string, authScope: AuthScopeEnum) => {
+  const tmpObj = userGroupList.value.filter((ele) => ele.id === id)[0];
+  if (item.eventTag === 'rename') {
+    popVisible.value[id] = {visible: true, authScope, defaultName: tmpObj.name, id};
+  }
+}
 defineExpose({
   initData,
 });
@@ -219,6 +241,10 @@ defineExpose({
                 :list="systemUserGroupList"
                 :auth-scope="popVisible[element.id].authScope"
                 :visible="popVisible[element.id].visible"
+                :default-name="popVisible[element.id].defaultName"
+                :id="popVisible[element.id].id"
+                @cancel="systemUserGroupVisible = false"
+                @submit="handleCreateUserGroup"
             >
               <div
                   class="flex max-w-[100%] grow flex-row items-center justify-between"
@@ -242,6 +268,18 @@ defineExpose({
                         @click="handleAddMember"
                     />
                   </div>
+                  <more-action v-if="
+                      isSystemShowAll &&
+                      !element.internal &&
+                      (element.scopeId !== 'global' || !isGlobalDisable) &&
+                      systemMoreAction.length > 0
+                    "
+                               :list="systemMoreAction"
+                               @select="(value) => handleMoreAction(value, element.id, AuthScopeEnum.SYSTEM)">
+                    <div class="icon-button">
+                      <mm-icon type="i-mdi-dots-horizontal-circle-outline"/>
+                    </div>
+                  </more-action>
                 </div>
               </div>
             </create-user-group-popup>
@@ -273,7 +311,66 @@ defineExpose({
             {{ $t("system.userGroup.orgUserGroup") }}
           </div>
         </div>
+        <create-user-group-popup :list="orgUserGroupList"
+                                 :visible="orgUserGroupVisible"
+                                 :auth-scope="AuthScopeEnum.ORGANIZATION"
+                                 @cancel="orgUserGroupVisible = false">
+          <n-tooltip trigger="hover" placement="right">
+            <template #trigger>
+              <mm-icon
+                  v-permission="props.addPermission"
+                  type="i-mdi-plus-circle-outline"
+                  class="cursor-pointer"
+                  @click="orgUserGroupVisible = true"
+              />
+            </template>
+            {{ `创建${$t("system.userGroup.orgUserGroup")}` }}
+          </n-tooltip>
+        </create-user-group-popup>
       </div>
+      <transition>
+        <div v-if="orgToggle">
+          <div
+              v-for="element in orgUserGroupList"
+              :key="element.id"
+              class="list-item"
+              :class="{ 'bg-lime-200': element.id === currentId }"
+              @click="handleListItemClick(element)"
+          >
+            <create-user-group-popup
+                :list="orgUserGroupList"
+                :auth-scope="popVisible[element.id].authScope"
+                :visible="popVisible[element.id].visible"
+            >
+              <div
+                  class="flex max-w-[100%] grow flex-row items-center justify-between"
+              >
+                {{ element.name }}
+                <div
+                    v-if="
+                    element.type === systemType ||
+                    (isSystemShowAll &&
+                      !element.internal &&
+                      (element.scopeId !== 'global' || !isGlobalDisable) &&
+                      systemMoreAction.length > 0)
+                  "
+                    class="list-item-action flex flex-row items-center gap-[8px] opacity-0"
+                    :class="{ '!opacity-100': element.id === currentId }"
+                >
+                  <div v-if="element.type === systemType" class="icon-button">
+                    <mm-icon
+                        v-permission="props.updatePermission"
+                        type="i-mdi-plus-circle-outline"
+                        @click="handleAddMember"
+                    />
+                  </div>
+                </div>
+              </div>
+            </create-user-group-popup>
+          </div>
+          <n-divider/>
+        </div>
+      </transition>
     </div>
     <div v-if="showProject" v-permission="['PROJECT_GROUP:READ']" class="mt-2">
       <div class="flex items-center justify-between px-[4px] py-[7px]">
@@ -310,5 +407,12 @@ defineExpose({
   &:hover .list-item-action {
     opacity: 1;
   }
+}
+
+.icon-button {
+  display: flex;
+  box-sizing: border-box;
+  justify-content: center;
+  align-items: center;
 }
 </style>

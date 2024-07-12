@@ -4,6 +4,8 @@ import {AuthScopeEnum} from "/@/enums/commonEnum.ts";
 import {UserGroupItem} from "/@/api/interface/setting/user-group.ts";
 import type {FormInst, FormItemRule, FormRules} from 'naive-ui'
 import {useI18n} from "/@/hooks/use-i18n.ts";
+import {useAppStore} from "/@/store";
+import {updateOrAddOrgUserGroup, updateOrAddUserGroup} from "/@/api/modules/setting/user-group.ts";
 
 const {t} = useI18n()
 const systemType = inject<AuthScopeEnum>('systemType');
@@ -19,6 +21,7 @@ const emit = defineEmits<{
   (e: 'cancel', value: boolean): void;
   (e: 'submit', currentId: string): void;
 }>();
+const appStore = useAppStore();
 const formRef = ref<FormInst | null>(null)
 const form = reactive({
   name: '',
@@ -50,6 +53,7 @@ const rules: FormRules = {
     }
   ]
 }
+const loading = ref(false);
 const currentVisible = ref(props.visible);
 watchEffect(() => {
   currentVisible.value = props.visible;
@@ -67,11 +71,39 @@ const handleOutsideClick = () => {
   }
 };
 const handleBeforeOk = () => {
-  formRef.value?.validate((errors) => {
+  formRef.value?.validate(async (errors) => {
     if (errors) {
       return false
     }
-    let res: UserGroupItem | undefined;
+    try {
+      loading.value = true;
+      let res: UserGroupItem | undefined;
+      if (systemType === AuthScopeEnum.SYSTEM) {
+        res = await updateOrAddUserGroup({id: props.id, name: form.name, type: props.authScope});
+      } else if (systemType === AuthScopeEnum.ORGANIZATION) {
+        // 组织用户组
+        res = await updateOrAddOrgUserGroup({
+          id: props.id,
+          name: form.name,
+          type: props.authScope,
+          scopeId: appStore.state.currentOrgId,
+        });
+      } else {
+        res = {name: form.name}
+      }
+      if (res) {
+        window.$message.success(
+            props.id ? t('system.userGroup.updateUserGroupSuccess') : t('system.userGroup.addUserGroupSuccess')
+        );
+        emit('submit', res.id);
+        handleCancel();
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+    } finally {
+      loading.value = false;
+    }
   })
 }
 </script>
@@ -100,10 +132,11 @@ const handleBeforeOk = () => {
         </n-form>
       </div>
       <div class="flex flex-row flex-nowrap justify-end gap-2">
-        <n-button secondary size="tiny" @click="handleCancel">
+        <n-button secondary size="tiny" :disabled="loading" @click="handleCancel">
           {{ t('common.cancel') }}
         </n-button>
-        <n-button type="primary" size="tiny" @click="handleBeforeOk">
+        <n-button type="primary" size="tiny" :loading="loading" :disabled="form.name.length === 0"
+                  @click="handleBeforeOk">
           {{ props.id ? t('common.confirm') : t('common.create') }}
         </n-button>
       </div>
