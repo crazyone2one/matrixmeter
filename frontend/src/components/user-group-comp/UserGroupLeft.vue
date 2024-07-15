@@ -120,6 +120,40 @@ const systemMoreAction = [
     permission: ["SYSTEM_USER_ROLE:READ+DELETE"],
   },
 ];
+const orgMoreAction: ActionsItem[] = [
+  {
+    label: 'system.userGroup.rename',
+    danger: false,
+    eventTag: 'rename',
+    permission: props.updatePermission,
+  },
+  {
+    isDivider: true,
+  },
+  {
+    label: 'system.userGroup.delete',
+    danger: true,
+    eventTag: 'delete',
+    permission: ['ORGANIZATION_USER_ROLE:READ+DELETE'],
+  },
+];
+const projectMoreAction: ActionsItem[] = [
+  {
+    label: 'system.userGroup.rename',
+    danger: false,
+    eventTag: 'rename',
+    permission: props.updatePermission,
+  },
+  {
+    isDivider: true,
+  },
+  {
+    label: 'system.userGroup.delete',
+    danger: true,
+    eventTag: 'delete',
+    permission: ['PROJECT_GROUP:READ+DELETE'],
+  },
+];
 const handleAddMember = () => userModalVisible.value = true;
 const handleAddUserCancel = (shouldSearch: boolean) => {
   userModalVisible.value = false;
@@ -207,6 +241,12 @@ const handleMoreAction = (item: ActionsItem, id: string, authScope: AuthScopeEnu
     })
   }
 }
+const handleRenameCancel = (element: UserGroupItem, id?: string) => {
+  if (id) {
+    initData(id, true);
+  }
+  popVisible.value[element.id].visible = false;
+};
 defineExpose({
   initData,
 });
@@ -345,7 +385,8 @@ defineExpose({
         <create-user-group-popup :list="orgUserGroupList"
                                  :visible="orgUserGroupVisible"
                                  :auth-scope="AuthScopeEnum.ORGANIZATION"
-                                 @cancel="orgUserGroupVisible = false">
+                                 @cancel="orgUserGroupVisible = false"
+                                 @submit="handleCreateUserGroup">
           <n-tooltip trigger="hover" placement="right">
             <template #trigger>
               <mm-icon
@@ -372,18 +413,48 @@ defineExpose({
                 :list="orgUserGroupList"
                 :auth-scope="popVisible[element.id].authScope"
                 :visible="popVisible[element.id].visible"
+                :default-name="popVisible[element.id].defaultName"
+                :id="popVisible[element.id].id"
+                @cancel="handleRenameCancel(element)"
+                @submit="handleRenameCancel(element, element.id)"
             >
               <div
                   class="flex max-w-[100%] grow flex-row items-center justify-between"
               >
-                {{ element.name }}
+                <n-tooltip trigger="hover">
+                  <template #trigger>
+                    <div>{{ element.name }}</div>
+                    <div v-if="systemType === AuthScopeEnum.ORGANIZATION">{{
+                        `(${
+                            element.internal
+                                ? t('common.internal')
+                                : element.scopeId === 'global'
+                                    ? t('common.system.custom')
+                                    : t('common.custom')
+                        })`
+                      }}
+                    </div>
+                  </template>
+                  {{
+                    systemType === AuthScopeEnum.ORGANIZATION ? element.name +
+                        `(${
+                            element.internal
+                                ? t('common.internal')
+                                : element.scopeId === 'global'
+                                    ? t('common.system.custom')
+                                    : t('common.custom')
+                        })`
+                        : element.name
+                  }}
+                </n-tooltip>
+
                 <div
                     v-if="
                     element.type === systemType ||
-                    (isSystemShowAll &&
+                    (isOrdShowAll &&
                       !element.internal &&
                       (element.scopeId !== 'global' || !isGlobalDisable) &&
-                      systemMoreAction.length > 0)
+                      orgMoreAction.length > 0)
                   "
                     class="list-item-action flex flex-row items-center gap-[8px] opacity-0"
                     :class="{ '!opacity-100': element.id === currentId }"
@@ -395,6 +466,18 @@ defineExpose({
                         @click="handleAddMember"
                     />
                   </div>
+                  <more-action v-if="
+                      isOrdShowAll &&
+                      !element.internal &&
+                      (element.scopeId !== 'global' || !isGlobalDisable) &&
+                      orgMoreAction.length > 0
+                    "
+                               :list="orgMoreAction"
+                               @select="(value) => handleMoreAction(value, element.id, AuthScopeEnum.ORGANIZATION)">
+                    <div class="icon-button">
+                      <mm-icon type="i-mdi-dots-horizontal-circle-outline"/>
+                    </div>
+                  </more-action>
                 </div>
               </div>
             </create-user-group-popup>
@@ -422,7 +505,86 @@ defineExpose({
             {{ $t("system.userGroup.projectUserGroup") }}
           </div>
         </div>
+        <create-user-group-popup :visible="projectUserGroupVisible" :list="projectUserGroupList"
+                                 :auth-scope="AuthScopeEnum.PROJECT">
+          <n-tooltip trigger="hover" placement="right">
+            <template #trigger>
+              <mm-icon
+                  v-permission="props.addPermission"
+                  type="i-mdi-plus-circle-outline"
+                  class="cursor-pointer"
+                  @click="projectUserGroupVisible = true"
+              />
+            </template>
+            {{ `创建${$t("system.userGroup.projectUserGroup")}` }}
+          </n-tooltip>
+        </create-user-group-popup>
       </div>
+      <transition>
+        <div v-if="projectToggle">
+          <div
+              v-for="element in projectUserGroupList"
+              :key="element.id"
+              class="list-item"
+              :class="{ 'bg-lime-200': element.id === currentId }"
+              @click="handleListItemClick(element)"
+          >
+            <create-user-group-popup
+                :list="projectUserGroupList"
+                :auth-scope="popVisible[element.id].authScope"
+                :visible="popVisible[element.id].visible"
+                :default-name="popVisible[element.id].defaultName"
+                :id="popVisible[element.id].id"
+                @cancel="handleRenameCancel(element)"
+                @submit="handleRenameCancel(element, element.id)"
+            >
+              <div
+                  class="flex max-w-[100%] grow flex-row items-center justify-between"
+              >
+                <n-tooltip trigger="hover">
+                  <template #trigger>
+                    <div>{{ element.name }}</div>
+                  </template>
+                  {{ element.name }}
+                </n-tooltip>
+
+                <div
+                    v-if="
+                    element.type === systemType ||
+                    (isProjectShowAll &&
+                      !element.internal &&
+                      (element.scopeId !== 'global' || !isGlobalDisable) &&
+                      projectMoreAction.length > 0)
+                  "
+                    class="list-item-action flex flex-row items-center gap-[8px] opacity-0"
+                    :class="{ '!opacity-100': element.id === currentId }"
+                >
+                  <div v-if="element.type === systemType" class="icon-button">
+                    <mm-icon
+                        v-permission="props.updatePermission"
+                        type="i-mdi-plus-circle-outline"
+                        @click="handleAddMember"
+                    />
+                  </div>
+                  <more-action v-if="
+                      isProjectShowAll &&
+                      !element.internal &&
+                      (element.scopeId !== 'global' || !isGlobalDisable) &&
+                      projectMoreAction.length > 0
+                    "
+                               :list="projectMoreAction"
+                               @select="(value) => handleMoreAction(value, element.id, AuthScopeEnum.PROJECT)">
+                    <div class="icon-button">
+                      <mm-icon type="i-mdi-dots-horizontal-circle-outline"/>
+                    </div>
+                  </more-action>
+                </div>
+              </div>
+            </create-user-group-popup>
+          </div>
+          <n-divider/>
+        </div>
+      </transition>
     </div>
   </div>
   <add-user-modal :visible="userModalVisible" :current-id="currentItem.id" @cancel="handleAddUserCancel"/>
