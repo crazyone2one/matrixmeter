@@ -94,7 +94,7 @@ public class JwtProvider {
         String username = getUserNameFromJwtToken(authToken);
         boolean isValidToken = userKeyService.findByToken(authToken)
                 .map(UserKey::getEnable).orElse(false);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(authToken) && isValidToken;
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(authToken) ;
     }
 
     public boolean isTokenExpired(String authToken) {
