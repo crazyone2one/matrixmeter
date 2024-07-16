@@ -16,6 +16,7 @@ import cn.master.matrix.payload.dto.TableBatchProcessDTO;
 import cn.master.matrix.payload.dto.request.BasePageRequest;
 import cn.master.matrix.payload.dto.request.OrganizationMemberBatchRequest;
 import cn.master.matrix.payload.dto.request.ProjectAddMemberBatchRequest;
+import cn.master.matrix.payload.dto.request.user.UserChangeEnableRequest;
 import cn.master.matrix.payload.dto.request.user.UserCreateRequest;
 import cn.master.matrix.payload.dto.request.user.UserEditRequest;
 import cn.master.matrix.payload.dto.request.user.UserRoleBatchRelationRequest;
@@ -151,5 +152,21 @@ public class UserController {
         organizationService.addMemberBySystem(request, SessionUtils.getUserId());
         userLogService.batchAddOrgLog(userRoleBatchRelationRequest, SessionUtils.getUserId());
         return new TableBatchProcessResponse(userRoleBatchRelationRequest.getSelectIds().size(), userRoleBatchRelationRequest.getSelectIds().size());
+    }
+
+    @PostMapping("/update/enable")
+    @Operation(summary = "系统设置-系统-用户-启用/禁用用户")
+    @HasAuthorize(PermissionConstants.SYSTEM_USER_UPDATE)
+    @Log(type = OperationLogType.UPDATE, expression = "#mmClass.batchUpdateEnableLog(#request)", mmClass = UserLogService.class)
+    public TableBatchProcessResponse updateUserEnable(@Validated @RequestBody UserChangeEnableRequest request) {
+        return userService.updateUserEnable(request, SessionUtils.getUserId(), SessionUtils.getUser().getUsername());
+    }
+
+    @PostMapping("/reset/password")
+    @Operation(summary = "系统设置-系统-用户-重置用户密码")
+    @HasAuthorize(PermissionConstants.SYSTEM_USER_UPDATE)
+    @Log(type = OperationLogType.UPDATE, expression = "#mmClass.resetPasswordLog(#request)", mmClass = UserLogService.class)
+    public TableBatchProcessResponse resetPassword(@Validated @RequestBody TableBatchProcessDTO request) {
+        return userService.resetPassword(request, SessionUtils.getUserId());
     }
 }

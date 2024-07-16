@@ -3,6 +3,7 @@ import {ActionsItem} from "/@/components/more-action/types.ts";
 import {computed} from "vue";
 import type {DropdownOption} from "naive-ui";
 import {useI18n} from "/@/hooks/use-i18n.ts";
+import MmIcon from "/@/components/icon/index.vue";
 
 const props = defineProps<{
   list: ActionsItem[];
@@ -27,9 +28,8 @@ const selectHandler = (key: string | number) => {
 </script>
 
 <template>
-  <n-dropdown :options="options" @select="selectHandler">
-    <slot></slot>
-
+  <n-dropdown trigger="click" :options="options" @select="selectHandler">
+    <mm-icon type="i-mdi-dots-horizontal-circle-outline"/>
   </n-dropdown>
 </template>
 

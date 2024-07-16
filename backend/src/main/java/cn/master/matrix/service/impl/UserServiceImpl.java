@@ -6,10 +6,7 @@ import cn.master.matrix.exception.CustomException;
 import cn.master.matrix.mapper.UserMapper;
 import cn.master.matrix.payload.dto.TableBatchProcessDTO;
 import cn.master.matrix.payload.dto.request.BasePageRequest;
-import cn.master.matrix.payload.dto.request.user.PersonalUpdatePasswordRequest;
-import cn.master.matrix.payload.dto.request.user.PersonalUpdateRequest;
-import cn.master.matrix.payload.dto.request.user.UserCreateRequest;
-import cn.master.matrix.payload.dto.request.user.UserEditRequest;
+import cn.master.matrix.payload.dto.request.user.*;
 import cn.master.matrix.payload.dto.user.*;
 import cn.master.matrix.payload.dto.user.response.UserBatchCreateResponse;
 import cn.master.matrix.payload.response.TableBatchProcessResponse;
@@ -260,6 +257,45 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         checkNewOrganizationAndProject(user);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public TableBatchProcessResponse updateUserEnable(UserChangeEnableRequest request, String operatorId, String operatorName) {
+        request.setSelectIds(userToolService.getBatchUserIds(request));
+        this.checkUserInDb(request.getSelectIds());
+        if (!request.isEnable()) {
+            //不能禁用当前用户和admin
+            this.checkProcessUserAndThrowException(request.getSelectIds(), operatorId, operatorName, Translator.get("user.not.disable"));
+        }
+        val update = updateChain().set(User::getEnable, request.isEnable())
+                .where(User::getId).in(request.getSelectIds()).update();
+        TableBatchProcessResponse response = new TableBatchProcessResponse();
+        if (update) {
+            response.setTotalCount(request.getSelectIds().size());
+            response.setSuccessCount(request.getSelectIds().size());
+        }
+        return response;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public TableBatchProcessResponse resetPassword(TableBatchProcessDTO request, String operator) {
+        request.setSelectIds(userToolService.getBatchUserIds(request));
+        this.checkUserInDb(request.getSelectIds());
+        List<User> userList = userToolService.selectByIdList(request.getSelectIds());
+        for (User user : userList) {
+            updateChain().set(User::getPassword, StringUtils.equalsIgnoreCase("admin", user.getId())
+                            ? passwordEncoder.encode("admin")
+                            : passwordEncoder.encode(user.getEmail()))
+                    .set(User::getUpdateUser, operator)
+                    .where(User::getId).eq(user.getId())
+                    .update();
+        }
+        TableBatchProcessResponse response = new TableBatchProcessResponse();
+        response.setTotalCount(request.getSelectIds().size());
+        response.setSuccessCount(request.getSelectIds().size());
+        return response;
+    }
+
     private void checkNewOrganizationAndProject(UserDTO user) {
         List<UserRoleRelation> userRoleRelations = user.getUserRoleRelations();
         List<String> projectRoleIds = user.getUserRoles()
@@ -495,8 +531,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     private void checkUserEmail(String id, String email) {
-        queryChain().where(User::getEmail).eq(email).and(User::getId).ne(id)
-                .oneOpt()
-                .orElseThrow(() -> new CustomException(Translator.get("user_email_already_exists")));
+        val users = queryChain().where(User::getEmail).eq(email).and(User::getId).ne(id).count();
+        if (users > 0) {
+            throw new CustomException(Translator.get("user_email_already_exists"));
+        }
     }
 }

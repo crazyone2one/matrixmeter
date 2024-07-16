@@ -2,10 +2,7 @@ package cn.master.matrix.service;
 
 import cn.master.matrix.payload.dto.TableBatchProcessDTO;
 import cn.master.matrix.payload.dto.request.BasePageRequest;
-import cn.master.matrix.payload.dto.request.user.PersonalUpdatePasswordRequest;
-import cn.master.matrix.payload.dto.request.user.PersonalUpdateRequest;
-import cn.master.matrix.payload.dto.request.user.UserCreateRequest;
-import cn.master.matrix.payload.dto.request.user.UserEditRequest;
+import cn.master.matrix.payload.dto.request.user.*;
 import cn.master.matrix.payload.dto.user.PersonalDTO;
 import cn.master.matrix.payload.dto.user.UserDTO;
 import cn.master.matrix.payload.dto.user.UserExtendDTO;
@@ -49,4 +46,8 @@ public interface UserService extends IService<User> {
     List<User> getUserList(String keyword);
 
     void autoSwitch(UserDTO user);
+
+    TableBatchProcessResponse updateUserEnable(UserChangeEnableRequest request, String operatorId, String operatorName);
+
+    TableBatchProcessResponse resetPassword(TableBatchProcessDTO request, String operator);
 }

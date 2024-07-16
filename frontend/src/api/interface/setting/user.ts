@@ -1,4 +1,6 @@
 // 用户模型
+import {BatchApiParams} from "/@/api/interface/common.ts";
+
 export interface UserListItem {
     id: string;
     name: string;
@@ -45,4 +47,40 @@ export interface UserRoleListItem {
     updateTime: number;
     createUser: string;
     scopeId: string; // 应用范围
+}
+
+export interface UpdateUserStatusParams extends BatchApiParams {
+    enable: boolean;
+}
+
+export type DeleteUserParams = BatchApiParams;
+export type ResetUserPasswordParams = BatchApiParams;
+
+// 创建用户模型
+export interface SimpleUserInfo {
+    id?: string;
+    name: string;
+    email: string;
+    phone?: string;
+}
+
+export interface SystemRole {
+    id: string;
+    name: string;
+    selected: boolean; // 是否可选
+    closeable: boolean; // 是否可取消
+}
+
+export interface CreateUserResult {
+    errorEmails: Record<string, any>;
+    successList: any[];
+}
+
+export interface CreateUserParams {
+    userInfoList: SimpleUserInfo[];
+    userRoleIdList: string[];
+}
+export interface UpdateUserInfoParams extends SimpleUserInfo {
+    id: string;
+    userRoleIdList: string[];
 }

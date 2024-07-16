@@ -347,9 +347,7 @@ defineExpose({
                     "
                                :list="systemMoreAction"
                                @select="(value) => handleMoreAction(value, element.id, AuthScopeEnum.SYSTEM)">
-                    <div class="icon-button">
-                      <mm-icon type="i-mdi-dots-horizontal-circle-outline"/>
-                    </div>
+                    <div class="icon-button"/>
                   </more-action>
                 </div>
               </div>
@@ -475,7 +473,7 @@ defineExpose({
                                :list="orgMoreAction"
                                @select="(value) => handleMoreAction(value, element.id, AuthScopeEnum.ORGANIZATION)">
                     <div class="icon-button">
-                      <mm-icon type="i-mdi-dots-horizontal-circle-outline"/>
+
                     </div>
                   </more-action>
                 </div>
@@ -575,7 +573,7 @@ defineExpose({
                                :list="projectMoreAction"
                                @select="(value) => handleMoreAction(value, element.id, AuthScopeEnum.PROJECT)">
                     <div class="icon-button">
-                      <mm-icon type="i-mdi-dots-horizontal-circle-outline"/>
+
                     </div>
                   </more-action>
                 </div>
