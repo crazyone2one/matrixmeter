@@ -32,3 +32,4 @@ export const RegisterByInviteUrl = '/system/user/register-by-invite';
 export const InviteUserUrl = '/system/user/invite';
 // 检查邀请链接是否过期
 export const ValidInviteUrl = '/system/user/check-invite';
+export const DownloadTemplate = '/system/user/get-import-template';

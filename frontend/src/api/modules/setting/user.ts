@@ -13,9 +13,11 @@ import {
 import {
     CreateUserUrl,
     DeleteUserUrl,
+    DownloadTemplate,
     EnableUserUrl,
     GetSystemRoleUrl,
     GetUserListUrl,
+    ImportUserUrl,
     ResetPasswordUrl,
     UpdateUserUrl
 } from "/@/api/requrls/setting/user.ts";
@@ -70,4 +72,22 @@ export const batchCreateUser = (param: CreateUserParams) => alovaInstance.Post<C
  * 更新用户信息
  * @param param
  */
-export const updateUserInfo = (param: UpdateUserInfoParams) => alovaInstance.Post(UpdateUserUrl, param)
+export const updateUserInfo = (param: UpdateUserInfoParams) => alovaInstance.Post(UpdateUserUrl, param);
+export const downloadImportTemplate = () => {
+    const method = alovaInstance.Get(DownloadTemplate);
+    method.meta = {
+        isDownload: true
+    }
+    return method
+};
+export const importUserInfo = (data: FormData) => {
+    const _method = alovaInstance.Post<{
+        errorMessages: {},
+        importCount: number,
+        successCount: number
+    }>(ImportUserUrl, data);
+    _method.meta = {
+        isUpload: true
+    }
+    return _method
+};

@@ -25,6 +25,7 @@ import {cloneDeep} from "lodash-es";
 import BatchForm from '/@/components/batch-form/index.vue'
 import {FormItemModel} from "/@/components/batch-form/types.ts";
 import {validateEmail, validatePhone} from "/@/utils/validate.ts";
+import UploadModal from '/@/views/setting/system/user/components/upload-modal/index.vue'
 
 type UserModalMode = 'create' | 'edit';
 
@@ -42,9 +43,11 @@ const tableQueryParams = ref<TableQueryParams>({
 });
 const userFormMode = ref<UserModalMode>('create');
 const visible = ref(false);
+const importVisible = ref(false);
 const isBatchFormChange = ref(false);
 const userFormRef = ref<FormInst | null>(null)
 const batchFormRef = ref<InstanceType<typeof BatchForm> | null>(null)
+const UploadModalRef = ref<InstanceType<typeof UploadModal>>()
 const batchFormModels: Ref<FormItemModel[]> = ref([
   {
     field: 'name',
@@ -523,6 +526,12 @@ const beforeCreateUser = () => {
     userFormValidate(updateUser);
   }
 }
+const showImportModal = () => {
+  importVisible.value = true;
+}
+const handleCancelImport = () => {
+  importVisible.value = false
+}
 onBeforeMount(() => {
   fetchData()
 })
@@ -535,7 +544,9 @@ onBeforeMount(() => {
                   @click="showUserModal('create')">
           {{ t('system.user.createUser') }}
         </n-button>
-        <n-button v-permission.all="['SYSTEM_USER:READ+IMPORT', 'SYSTEM_USER_ROLE:READ']" type="primary" class="mr-3">
+        <n-button v-permission.all="['SYSTEM_USER:READ+IMPORT', 'SYSTEM_USER_ROLE:READ']" type="primary" ghost
+                  class="mr-3"
+                  @click="showImportModal">
           {{ t('system.user.importUser') }}
         </n-button>
       </div>
@@ -584,6 +595,8 @@ onBeforeMount(() => {
       </n-button>
     </template>
   </n-modal>
+  <upload-modal ref="UploadModalRef" :visible="importVisible" accept="excel" :multiple="false"
+                @cancel="handleCancelImport" @load-list="fetchData"/>
 </template>
 
 

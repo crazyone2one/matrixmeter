@@ -19,8 +19,9 @@ export enum UploadAcceptEnum {
 }
 
 export enum UploadStatus {
-  init = 'init',
-  done = 'done',
+  pending = 'pending',
+  finished = 'finished',
   error = 'error',
   uploading = 'uploading',
+  removed = 'removed',
 }

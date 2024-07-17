@@ -1,5 +1,6 @@
 package cn.master.matrix.service;
 
+import cn.master.matrix.entity.User;
 import cn.master.matrix.payload.dto.TableBatchProcessDTO;
 import cn.master.matrix.payload.dto.request.BasePageRequest;
 import cn.master.matrix.payload.dto.request.user.*;
@@ -8,10 +9,11 @@ import cn.master.matrix.payload.dto.user.UserDTO;
 import cn.master.matrix.payload.dto.user.UserExtendDTO;
 import cn.master.matrix.payload.dto.user.UserTableResponse;
 import cn.master.matrix.payload.dto.user.response.UserBatchCreateResponse;
+import cn.master.matrix.payload.dto.user.response.UserImportResponse;
 import cn.master.matrix.payload.response.TableBatchProcessResponse;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.service.IService;
-import cn.master.matrix.entity.User;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -50,4 +52,6 @@ public interface UserService extends IService<User> {
     TableBatchProcessResponse updateUserEnable(UserChangeEnableRequest request, String operatorId, String operatorName);
 
     TableBatchProcessResponse resetPassword(TableBatchProcessDTO request, String operator);
+
+    UserImportResponse importByExcel(MultipartFile excelFile, String source, String sessionId);
 }

@@ -3,22 +3,33 @@ package cn.master.matrix.service.impl;
 import cn.master.matrix.constants.UserRoleType;
 import cn.master.matrix.entity.*;
 import cn.master.matrix.exception.CustomException;
+import cn.master.matrix.handler.listener.UserImportEventListener;
 import cn.master.matrix.mapper.UserMapper;
 import cn.master.matrix.payload.dto.TableBatchProcessDTO;
+import cn.master.matrix.payload.dto.excel.ExcelParseDTO;
+import cn.master.matrix.payload.dto.excel.UserExcel;
+import cn.master.matrix.payload.dto.excel.UserExcelRowDTO;
 import cn.master.matrix.payload.dto.request.BasePageRequest;
 import cn.master.matrix.payload.dto.request.user.*;
 import cn.master.matrix.payload.dto.user.*;
 import cn.master.matrix.payload.dto.user.response.UserBatchCreateResponse;
+import cn.master.matrix.payload.dto.user.response.UserImportResponse;
 import cn.master.matrix.payload.response.TableBatchProcessResponse;
 import cn.master.matrix.service.*;
 import cn.master.matrix.service.log.UserLogService;
 import cn.master.matrix.util.Translator;
+import com.alibaba.excel.EasyExcelFactory;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.query.QueryMethods;
 import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -26,11 +37,15 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.unit.DataSize;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,6 +60,7 @@ import static cn.master.matrix.entity.table.UserTableDef.USER;
  * @author 11's papa
  * @since 1.0.0 2024-06-21T10:54:08.016115500
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
@@ -56,6 +72,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final PasswordEncoder passwordEncoder;
     private final UserLogService userLogService;
     private final OperationLogService operationLogService;
+    @Value("50MB")
+    private DataSize maxImportFileSize;
 
     @Override
     public UserDTO getUserByKeyword(String keyword) {
@@ -123,7 +141,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public UserBatchCreateResponse save(UserCreateRequest userCreateDTO, String source, String operator) {
-
         globalUserRoleService.checkRoleIsGlobalAndHaveMember(userCreateDTO.getUserRoleIdList(), true);
         UserBatchCreateResponse response = new UserBatchCreateResponse();
         //检查用户邮箱的合法性
@@ -294,6 +311,66 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         response.setTotalCount(request.getSelectIds().size());
         response.setSuccessCount(request.getSelectIds().size());
         return response;
+    }
+
+    @Override
+    public UserImportResponse importByExcel(MultipartFile excelFile, String source, String sessionId) {
+        if (excelFile.getSize() > maxImportFileSize.toBytes()) {
+            throw new CustomException(Translator.get("file.size.is.too.large"));
+        }
+        UserImportResponse importResponse = new UserImportResponse();
+        ExcelParseDTO<UserExcelRowDTO> excelParseDTO = new ExcelParseDTO<>();
+        try {
+            excelParseDTO = getUserExcelParseDTO(excelFile);
+        } catch (Exception e) {
+            log.info("import user  error", e);
+        }
+        if (CollectionUtils.isNotEmpty(excelParseDTO.getDataList())) {
+            saveUserByExcelData(excelParseDTO.getDataList(), source, sessionId);
+        }
+        importResponse.generateResponse(excelParseDTO);
+        return importResponse;
+    }
+
+    private void saveUserByExcelData(@Valid @NotEmpty List<UserExcelRowDTO> dataList, @Valid @NotEmpty String source, @Valid @NotBlank String sessionId) {
+        UserCreateRequest userBatchCreateDTO = new UserCreateRequest();
+        userBatchCreateDTO.setUserRoleIdList(new ArrayList<>() {{
+            add("member");
+        }});
+        List<UserCreateInfo> userCreateInfoList = new ArrayList<>();
+        dataList.forEach(userExcelRowDTO -> {
+            UserCreateInfo userCreateInfo = new UserCreateInfo();
+            BeanUtils.copyProperties(userExcelRowDTO, userCreateInfo);
+            userCreateInfoList.add(userCreateInfo);
+        });
+        userBatchCreateDTO.setUserInfoList(userCreateInfoList);
+        saveUserAndRole(userBatchCreateDTO, source, sessionId, "/system/user/import");
+    }
+
+    private ExcelParseDTO<UserExcelRowDTO> getUserExcelParseDTO(MultipartFile excelFile) throws IOException {
+        UserImportEventListener userImportEventListener = new UserImportEventListener();
+        EasyExcelFactory.read(excelFile.getInputStream(), UserExcel.class, userImportEventListener).sheet().doRead();
+        return validateExcelUserInfo(userImportEventListener.getExcelParseDTO());
+    }
+
+    private ExcelParseDTO<UserExcelRowDTO> validateExcelUserInfo(@Valid @NotNull ExcelParseDTO<UserExcelRowDTO> excelParseDTO) {
+        List<UserExcelRowDTO> prepareSaveList = excelParseDTO.getDataList();
+        if (CollectionUtils.isNotEmpty(prepareSaveList)) {
+
+            var userInDbMap = queryChain().where(USER.EMAIL.in(prepareSaveList.stream()
+                            .map(UserExcelRowDTO::getEmail)
+                            .collect(Collectors.toList()))).list()
+                    .stream().collect(Collectors.toMap(User::getEmail, User::getId));
+            for (UserExcelRowDTO userExcelRow : prepareSaveList) {
+                //判断邮箱是否已存在数据库中
+                if (userInDbMap.containsKey(userExcelRow.getEmail())) {
+                    userExcelRow.setErrorMessage(Translator.get("user.email.import.in_system") + ": " + userExcelRow.getEmail());
+                    excelParseDTO.addErrorRowData(userExcelRow.getDataIndex(), userExcelRow);
+                }
+            }
+            excelParseDTO.getDataList().removeAll(excelParseDTO.getErrRowData().values());
+        }
+        return excelParseDTO;
     }
 
     private void checkNewOrganizationAndProject(UserDTO user) {

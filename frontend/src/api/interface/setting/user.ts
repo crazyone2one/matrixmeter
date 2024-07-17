@@ -80,7 +80,12 @@ export interface CreateUserParams {
     userInfoList: SimpleUserInfo[];
     userRoleIdList: string[];
 }
+
 export interface UpdateUserInfoParams extends SimpleUserInfo {
     id: string;
     userRoleIdList: string[];
+}
+
+export interface ImportUserParams {
+    fileList: (File)[];
 }

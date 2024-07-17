@@ -37,7 +37,6 @@ const {onAuthRequired, onResponseRefreshToken} =
                         redirect: currentRoute.name as string,
                     },
                 })
-                .then(() => "");
         },
         refreshTokenOnSuccess: {
             // 当服务端返回401时，表示token过期
@@ -68,7 +67,7 @@ const {onAuthRequired, onResponseRefreshToken} =
             },
         },
     });
-
+let isExpired = false;
 export const alovaInstance = createAlova({
     requestAdapter: fetchAdapter(),
     baseURL: import.meta.env.VITE_APP_BASE_API,
@@ -80,7 +79,8 @@ export const alovaInstance = createAlova({
         method.config.headers.PROJECT = appStore.state.currentProjectId;
     }),
     responded: onResponseRefreshToken(async (response, method) => {
-        const { t } = useI18n();
+        const {t} = useI18n();
+        if (isExpired) return;
         if (response.status >= 400) {
             switch (response.status) {
                 case 400:
@@ -92,12 +92,14 @@ export const alovaInstance = createAlova({
             }
             throw new Error(response.statusText);
         }
+        if (method.meta?.isDownload) {
+            return response.blob()
+        }
         const json = await response.json();
         if (json.code !== 100200) {
             // 抛出错误或返回reject状态的Promise实例时，此请求将抛出错误
             throw new Error(json.message);
         }
-        // 解析的响应数据将传给method实例的transform钩子函数，这些函数将在后续讲解
-        return method.meta?.isDownload ? response.blob() : json.data;
+        return json.data;
     }),
 });

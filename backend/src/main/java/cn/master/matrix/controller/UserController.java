@@ -13,6 +13,7 @@ import cn.master.matrix.handler.validation.Updated;
 import cn.master.matrix.payload.dto.BaseTreeNode;
 import cn.master.matrix.payload.dto.OptionDTO;
 import cn.master.matrix.payload.dto.TableBatchProcessDTO;
+import cn.master.matrix.payload.dto.excel.UserExcel;
 import cn.master.matrix.payload.dto.request.BasePageRequest;
 import cn.master.matrix.payload.dto.request.OrganizationMemberBatchRequest;
 import cn.master.matrix.payload.dto.request.ProjectAddMemberBatchRequest;
@@ -23,19 +24,28 @@ import cn.master.matrix.payload.dto.request.user.UserRoleBatchRelationRequest;
 import cn.master.matrix.payload.dto.user.UserDTO;
 import cn.master.matrix.payload.dto.user.UserTableResponse;
 import cn.master.matrix.payload.dto.user.response.UserBatchCreateResponse;
+import cn.master.matrix.payload.dto.user.response.UserImportResponse;
 import cn.master.matrix.payload.dto.user.response.UserSelectOption;
 import cn.master.matrix.payload.response.TableBatchProcessResponse;
 import cn.master.matrix.service.*;
 import cn.master.matrix.service.log.UserLogService;
 import cn.master.matrix.util.SessionUtils;
 import cn.master.matrix.util.TreeNodeParseUtils;
+import com.alibaba.excel.EasyExcel;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -169,4 +179,25 @@ public class UserController {
     public TableBatchProcessResponse resetPassword(@Validated @RequestBody TableBatchProcessDTO request) {
         return userService.resetPassword(request, SessionUtils.getUserId());
     }
+
+    @PostMapping(value = "/import", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @Operation(summary = "系统设置-系统-用户-导入用户")
+    @HasAuthorize(PermissionConstants.SYSTEM_USER_IMPORT)
+    public UserImportResponse importUser(@RequestPart(value = "file", required = false) MultipartFile excelFile) {
+        return userService.importByExcel(excelFile, UserSource.LOCAL.name(), SessionUtils.getUserId());
+    }
+
+    @GetMapping("/get-import-template")
+    @Operation(summary = "获得导入用户模板")
+    public void importTemplate(HttpServletResponse response) throws IOException {
+        response.reset();
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("测试", StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + "_" + System.currentTimeMillis() + ".xlsx");
+        EasyExcel.write(response.getOutputStream(), UserExcel.class).sheet("模板").doWrite(new ArrayList<>());
+        //userService.downloadTemplate(response.getOutputStream());
+    }
+
 }
