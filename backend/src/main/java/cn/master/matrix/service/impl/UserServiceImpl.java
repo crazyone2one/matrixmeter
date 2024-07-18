@@ -244,7 +244,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public List<UserExtendDTO> getMemberOption(String sourceId, String keyword) {
         val wrapper = queryChain().select(QueryMethods.distinct(USER.ALL_COLUMNS))
-                .from(USER).leftJoin(USER_ROLE_RELATION).on(USER.ID.eq(USER_ROLE_RELATION.USER_ID))
+                .select("count(urr.id) > 0 as memberFlag")
+                .from(USER).leftJoin(USER_ROLE_RELATION.as("urr")).on(USER.ID.eq(USER_ROLE_RELATION.USER_ID))
                 .where(USER_ROLE_RELATION.SOURCE_ID.eq(sourceId)
                         .and(USER.NAME.like(keyword).or(USER.EMAIL.like(keyword))))
                 .groupBy(USER.ID).limit(1000);

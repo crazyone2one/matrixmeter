@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -82,6 +83,12 @@ public class GlobalExceptionHandler {
         return message;
     }
 
+    @ExceptionHandler({BadSqlGrammarException.class})
+    public ResponseEntity<ResultHandler> handleBadSqlGrammarException(BadSqlGrammarException e) {
+        return ResponseEntity.internalServerError()
+                .body(ResultHandler.error(MmHttpResultCode.FAILED.getCode(), e.getCause().getMessage(), getStackTraceAsString(e)));
+    }
+
     @ExceptionHandler({Exception.class})
     public ResponseEntity<ResultHandler> handleException(Exception e) {
         if (e instanceof AccessDeniedException) {
@@ -92,4 +99,5 @@ public class GlobalExceptionHandler {
         return ResponseEntity.internalServerError()
                 .body(ResultHandler.error(MmHttpResultCode.FAILED.getCode(), e.getMessage(), getStackTraceAsString(e)));
     }
+
 }

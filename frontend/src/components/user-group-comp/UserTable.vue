@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, h, inject, onMounted, ref, watch, watchEffect} from "vue";
+import {computed, h, inject, onMounted, ref, watch} from "vue";
 import {CurrentUserGroupItem, UserTableItem} from "/@/api/interface/setting/user-group.ts";
 import {AuthScopeEnum} from "/@/enums/commonEnum";
 import {useAppStore} from "/@/store";
@@ -16,6 +16,7 @@ import {
 import {hasAnyPermission} from "/@/utils/permission.ts";
 import {prettyLog} from "/@/utils/log.ts";
 import RemoveButton from '/@/components/remove-button/index.vue'
+import Pagination from '/@/components/pagination/index.vue'
 
 const systemType = inject<AuthScopeEnum>("systemType");
 const appStore = useAppStore();
@@ -73,7 +74,7 @@ const {
   loading,
   data,
   page,
-  pageSize,
+  pageSize,total,
   send
 } = usePagination(
     // Method实例获取函数，它将接收page和pageSize，并返回一个Method实例
@@ -88,6 +89,7 @@ const {
       initialPageSize: 10, // 初始每页数据条数，默认为10
       debounce: 300,
       data: response => response.records,
+      total: response => response.totalRow,
       immediate: false
     }
 );
@@ -121,6 +123,8 @@ const handleRemove = async (record: UserTableItem) => {
     await fetchData();
   })
 }
+const handleSetPage = (param: number) => page.value = param
+const handleSetPageSize = (param: number) => pageSize.value = param;
 // watchEffect(() => {
 //   if (currentTempRoleId.value !== '' && currentOrgId.value) {
 //     if (systemType === AuthScopeEnum.SYSTEM) {
@@ -166,6 +170,9 @@ defineExpose({
         :data="data"
         :row-key="(row: UserTableItem) => row.id"
     />
+    <pagination :page-size="pageSize" :page="page" :count="total as number"
+                @update-page-size="handleSetPageSize"
+                @update-page="handleSetPage"/>
   </n-spin>
 </template>
 

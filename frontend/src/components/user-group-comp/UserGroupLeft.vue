@@ -164,7 +164,6 @@ const handleAddUserCancel = (shouldSearch: boolean) => {
 const {send} = useRequest(() => getUserGroupList(), {immediate: false, force: true});
 const initData = async (id?: string, isSelect = true) => {
   let res: UserGroupItem[] = [];
-  console.log('111')
   if (
       systemType === AuthScopeEnum.SYSTEM &&
       hasAnyPermission(["SYSTEM_USER_ROLE:READ"])

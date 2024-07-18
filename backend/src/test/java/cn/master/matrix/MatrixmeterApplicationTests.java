@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
+
 @SpringBootTest
 class MatrixmeterApplicationTests {
 	@Resource
@@ -16,10 +18,9 @@ class MatrixmeterApplicationTests {
 
 	@Test
 	void contextLoads() {
-		System.out.println(UpdateChain.of(User.class)
-						.set(User::getPassword, passwordEncoder.encode("admin"))
-						.where(User::getId).eq("admin")
-				.update());
+		LocalDate now = LocalDate.now();
+		int currentQuarter = (now.getMonthValue() - 1) / 3 + 1;
+		System.out.println(currentQuarter);
 	}
 
 }

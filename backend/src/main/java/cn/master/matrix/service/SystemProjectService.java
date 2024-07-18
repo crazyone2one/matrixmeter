@@ -3,6 +3,7 @@ package cn.master.matrix.service;
 import cn.master.matrix.constants.OperationLogModule;
 import cn.master.matrix.constants.OperationLogType;
 import cn.master.matrix.entity.Project;
+import cn.master.matrix.mapper.ProjectMapper;
 import cn.master.matrix.mapper.UserRoleRelationMapper;
 import cn.master.matrix.payload.dto.OptionDTO;
 import cn.master.matrix.payload.dto.ProjectDTO;
@@ -33,6 +34,7 @@ import static cn.master.matrix.entity.table.UserTableDef.USER;
 public class SystemProjectService {
     private final CommonProjectService commonProjectService;
     private final UserRoleRelationMapper userRoleRelationMapper;
+    private final ProjectMapper projectMapper;
 
     private final static String PREFIX = "/system/project";
     private final static String ADD_PROJECT = PREFIX + "/add";
@@ -46,13 +48,16 @@ public class SystemProjectService {
     }
 
     public Page<ProjectDTO> getProjectPage(ProjectRequest projectRequest) {
-        val queryChain = QueryChain.of(ProjectDTO.class).select(PROJECT.ALL_COLUMNS).from(PROJECT)
+        val queryChain = QueryChain.of(Project.class).select(PROJECT.ALL_COLUMNS)
+                .select(ORGANIZATION.NAME.as("organizationName"))
+                .from(PROJECT)
                 .innerJoin(ORGANIZATION).on(PROJECT.ORGANIZATION_ID.eq(ORGANIZATION.ID))
                 .where(PROJECT.ORGANIZATION_ID.eq(projectRequest.getOrganizationId())
                         .and(PROJECT.NAME.like(projectRequest.getKeyword())
                                 .or(PROJECT.NUM.like(projectRequest.getKeyword())))
                 );
         val page = commonProjectService.pageAs(Page.of(projectRequest.getPageNum(), projectRequest.getPageSize()), queryChain, ProjectDTO.class);
+        //val page = projectMapper.paginateWithRelationsAs(Page.of(projectRequest.getPageNum(), projectRequest.getPageSize()), queryChain, ProjectDTO.class);
         commonProjectService.buildUserInfo(page.getRecords());
         return page;
     }

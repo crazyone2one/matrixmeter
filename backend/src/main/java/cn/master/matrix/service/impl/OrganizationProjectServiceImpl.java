@@ -44,6 +44,7 @@ public class OrganizationProjectServiceImpl implements OrganizationProjectServic
     private final static String UPDATE_PROJECT = PREFIX + "/update";
     private final static String REMOVE_PROJECT_MEMBER = PREFIX + "/remove-member/";
     private final static String ADD_MEMBER = PREFIX + "/add-member";
+    private QueryWrapper subWrapper;
 
     @Override
     public ProjectDTO add(AddProjectRequest request, String userId) {
@@ -147,7 +148,7 @@ public class OrganizationProjectServiceImpl implements OrganizationProjectServic
         subWrapper.select(USER_ROLE_RELATION.ALL_COLUMNS).from(USER_ROLE_RELATION).where(USER_ROLE_RELATION.SOURCE_ID.eq(projectId));
         wrapper.select(QueryMethods.distinct(USER.ID), USER.NAME, USER.EMAIL)
                 .select("count(temp.id) > 0 as memberFlag")
-                .from(USER.as("u")).leftJoin(subWrapper.as("temp")).on("temp.user_id = u.id")
+                .from(USER.as("u")).leftJoin(new SelectQueryTable(subWrapper).as("temp")).on("temp.user_id = u.id")
                 .where(USER.ID.in(userIds).and(USER.NAME.like(keyword).or(USER.EMAIL.like(keyword))))
                 .groupBy(USER.ID)
                 .orderBy(USER.CREATE_TIME.desc()).limit(1000);

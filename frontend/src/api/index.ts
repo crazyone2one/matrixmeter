@@ -82,14 +82,43 @@ export const alovaInstance = createAlova({
         const {t} = useI18n();
         if (isExpired) return;
         if (response.status >= 400) {
+            let errMessage = '';
+            const json = await response.json();
+            const {message: msg} = json
             switch (response.status) {
                 case 400:
-                    window.$message.error(response.statusText)
+                    errMessage = `${msg}`;
+                    break;
+                case 404:
+                    errMessage = msg || t('api.errMsg404');
+                    break;
+                case 405:
+                    errMessage = msg || t('api.errMsg405');
+                    break;
+                case 408:
+                    errMessage = msg || t('api.errMsg408');
                     break;
                 case 500:
-                    window.$message.error(t('api.errMsg500'))
-                    break
+                    errMessage = msg || t('api.errMsg500');
+                    break;
+                case 501:
+                    errMessage = msg || t('api.errMsg501');
+                    break;
+                case 502:
+                    errMessage = msg || t('api.errMsg502');
+                    break;
+                case 503:
+                    errMessage = msg || t('api.errMsg503');
+                    break;
+                case 504:
+                    errMessage = msg || t('api.errMsg504');
+                    break;
+                case 505:
+                    errMessage = msg || t('api.errMsg505');
+                    break;
+                default:
             }
+            window.$message.error(errMessage)
             throw new Error(response.statusText);
         }
         if (method.meta?.isDownload) {

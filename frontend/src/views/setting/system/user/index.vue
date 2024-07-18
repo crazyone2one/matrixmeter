@@ -381,7 +381,7 @@ const handleTagClick = (record: UserListItem) => {
     record.selectUserGroupVisible = true;
   }
 }
-const {data, page, pageSize, total, pageCount, send: fetchData, onSuccess} = usePagination(
+const {data, page, pageSize, total, send: fetchData, onSuccess} = usePagination(
     // Method实例获取函数，它将接收page和pageSize，并返回一个Method实例
     (page, pageSize) => getUserList(page, pageSize, tableQueryParams.value),
     {

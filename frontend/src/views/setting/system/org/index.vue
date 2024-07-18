@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import BaseCard from '/@/components/base-card/index.vue'
-import {nextTick, ref} from "vue";
+import {nextTick, onBeforeMount, ref, watch} from "vue";
 import {useI18n} from "/@/hooks/use-i18n.ts";
 import SystemProject from '/@/views/setting/system/org/components/SystemProject.vue'
 import SystemOrganization from '/@/views/setting/system/org/components/SystemOrganization.vue'
+import AddProjectModal from "/@/views/setting/system/org/components/AddProjectModal.vue";
+import {useRequest} from "alova/client";
+import {getOrgAndProjectCount} from "/@/api/modules/setting/organizationAndProject.ts";
 
 const {t} = useI18n();
 const currentTable = ref('organization');
@@ -13,7 +16,9 @@ const orgTableRef = ref();
 const projectTableRef = ref();
 const keyword = ref('');
 const loading = ref(false)
-
+const organizationVisible = ref(false);
+const projectVisible = ref(false);
+const {send: initOrgAndProjectCount} = useRequest(() => getOrgAndProjectCount(), {immediate: false})
 const handleSearch = () => {
   tableSearch()
 }
@@ -35,7 +40,34 @@ const tableSearch = () => {
       projectTableRef.value?.fetchData();
     });
   }
+  initOrgAndProjectCount().then(res => {
+    organizationCount.value = res.organizationTotal
+    projectCount.value = res.projectTotal
+  })
 }
+const handleAddOrganization = () => {
+  if (currentTable.value === 'organization') {
+    organizationVisible.value = true;
+  } else {
+    projectVisible.value = true;
+  }
+};
+const handleAddProjectCancel = (shouldSearch: boolean) => {
+  projectVisible.value = false;
+  if (shouldSearch) {
+    tableSearch();
+  }
+};
+watch(
+    () => currentTable.value,
+    () => {
+      keyword.value = '';
+    }
+);
+
+onBeforeMount(() => {
+  tableSearch();
+});
 </script>
 
 <template>
@@ -44,7 +76,8 @@ const tableSearch = () => {
       <div>
         <n-button v-if="currentTable !== 'organization'"
                   v-permission="['SYSTEM_ORGANIZATION_PROJECT:READ+ADD']"
-                  type="primary">
+                  type="primary"
+                  @click="handleAddOrganization">
           {{
             currentTable === 'organization'
                 ? t('system.organization.createOrganization')
@@ -71,10 +104,10 @@ const tableSearch = () => {
     </div>
     <div>
       <system-organization v-if="currentTable === 'organization'" ref="orgTableRef" v-model:keyword="keyword"/>
-      <system-project v-if="currentTable === 'project'" ref="projectTableRef"/>
+      <system-project v-if="currentTable === 'project'" ref="projectTableRef" :keyword="keyword"/>
     </div>
   </base-card>
-
+  <add-project-modal :visible="projectVisible" @cancel="handleAddProjectCancel"/>
 </template>
 
 <style scoped>

@@ -24,6 +24,7 @@ import cn.master.matrix.util.Translator;
 import com.mybatisflex.core.logicdelete.LogicDeleteManager;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.SelectQueryTable;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -94,6 +95,7 @@ public class CommonProjectServiceImpl extends ServiceImpl<ProjectMapper, Project
         Project project = new Project();
         BeanUtils.copyProperties(request, project);
         project.setCreateUser(userId);
+        project.setUpdateUser(userId);
         project.setModuleSetting(request.getModuleIds());
 
         if (CollectionUtils.isNotEmpty(request.getResourcePoolIds())) {
@@ -497,7 +499,7 @@ public class CommonProjectServiceImpl extends ServiceImpl<ProjectMapper, Project
                 .where(USER_ROLE_RELATION.SOURCE_ID.in(projectIds));
         return queryChain()
                 .select(PROJECT.ID).select("count(distinct temp.id) as memberCount")
-                .from(PROJECT.as("p")).leftJoin(wrapper.as("temp")).on("p.id = temp.source_id")
+                .from(PROJECT.as("p")).leftJoin(new SelectQueryTable(wrapper).as("temp")).on("p.id = temp.source_id")
                 .groupBy(PROJECT.ID)
                 .listAs(ProjectDTO.class);
     }

@@ -57,7 +57,7 @@ const useAppStore = defineStore(
     },
     {
         persist: {
-            paths: ["currentOrgId", "currentProjectId", "menuCollapse"],
+            paths: ["state.currentOrgId", "state.currentProjectId"],
         },
     }
 );
