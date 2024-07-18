@@ -21,6 +21,7 @@ export const showUpdateOrCreateMessage = (isEdit: boolean, id: string, organizat
                 NButton,
                 {
                     text: true,
+                    disabled: true,
                     onClick() {
                         enterProject(id, organizationId);
                     },

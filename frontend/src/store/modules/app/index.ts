@@ -3,6 +3,7 @@ import {ref} from "vue";
 import {RouteRecordRaw} from "vue-router";
 import {AppState} from "./types";
 import {cloneDeep} from "lodash-es";
+import {getProjectList} from "/@/api/modules/project-manage/project.ts";
 
 const useAppStore = defineStore(
     "app",
@@ -48,16 +49,23 @@ const useAppStore = defineStore(
         const setCurrentOrgId = (id: string) => (state.value.currentOrgId = id);
         const setCurrentProjectId = (id: string) =>
             (state.value.currentProjectId = id);
+        const initProjectList = async () => {
+            if (state.value.currentOrgId) {
+                state.value.projectList = await getProjectList(state.value.currentOrgId);
+            } else {
+                state.value.projectList = [];
+            }
+        }
         return {
             state,
             toggleMenu,
             setCurrentOrgId,
-            setCurrentProjectId, setTopMenus, getTopMenus, getCurrentTopMenu, setCurrentTopMenu
+            setCurrentProjectId, setTopMenus, getTopMenus, getCurrentTopMenu, setCurrentTopMenu, initProjectList
         };
     },
     {
         persist: {
-            paths: ["state.currentOrgId", "state.currentProjectId"],
+            paths: ["state.currentOrgId", "state.currentProjectId",'state.projectList'],
         },
     }
 );

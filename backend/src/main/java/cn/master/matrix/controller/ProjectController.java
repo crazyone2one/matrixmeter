@@ -1,6 +1,14 @@
 package cn.master.matrix.controller;
 
+import cn.master.matrix.constants.PermissionConstants;
+import cn.master.matrix.handler.annotation.HasAuthorize;
+import cn.master.matrix.payload.dto.ProjectDTO;
+import cn.master.matrix.payload.dto.request.project.ProjectSwitchRequest;
+import cn.master.matrix.payload.dto.user.UserDTO;
+import cn.master.matrix.service.ProjectService;
+import cn.master.matrix.util.SessionUtils;
 import com.mybatisflex.core.paginate.Page;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -25,82 +34,36 @@ import java.util.List;
  * @since 1.0.0 2024-06-28T16:11:33.913527
  */
 @RestController
-@Tag(name = "项目接口")
+@Tag(name = "项目管理")
 @RequestMapping("/project")
+@RequiredArgsConstructor
 public class ProjectController {
 
-    @Autowired
-    private CommonProjectService commonProjectService;
+    private final ProjectService projectService;
 
-    /**
-     * 添加项目。
-     *
-     * @param project 项目
-     * @return {@code true} 添加成功，{@code false} 添加失败
-     */
-    @PostMapping("save")
-    @Operation(description="保存项目")
-    public boolean save(@RequestBody @Parameter(description="项目")Project project) {
-        return commonProjectService.save(project);
+    @GetMapping("/get/{id}")
+    @Operation(summary = "项目管理-基本信息")
+    @HasAuthorize(PermissionConstants.PROJECT_BASE_INFO_READ)
+    public ProjectDTO getProject(@PathVariable String id) {
+        return projectService.getProjectById(id);
     }
 
-    /**
-     * 根据主键删除项目。
-     *
-     * @param id 主键
-     * @return {@code true} 删除成功，{@code false} 删除失败
-     */
-    @DeleteMapping("remove/{id}")
-    @Operation(description="根据主键项目")
-    public boolean remove(@PathVariable @Parameter(description="项目主键")Serializable id) {
-        return commonProjectService.removeById(id);
+    @GetMapping("/list/options/{organizationId}")
+    @Operation(summary = "根据组织ID获取所有有权限的项目")
+    public List<Project> getUserProject(@PathVariable String organizationId) {
+        return projectService.getUserProject(organizationId, SessionUtils.getUserId());
     }
 
-    /**
-     * 根据主键更新项目。
-     *
-     * @param project 项目
-     * @return {@code true} 更新成功，{@code false} 更新失败
-     */
-    @PutMapping("update")
-    @Operation(description="根据主键更新项目")
-    public boolean update(@RequestBody @Parameter(description="项目主键")Project project) {
-        return commonProjectService.updateById(project);
+    @GetMapping("/list/options/{organizationId}/{module}")
+    @Operation(summary = "根据组织ID获取所有开启某个模块的所有有权限的项目")
+    public List<Project> getUserProjectWidthModule(@PathVariable String organizationId, @PathVariable String module) {
+        return projectService.getUserProjectWidthModule(organizationId, module, SessionUtils.getUserId());
     }
 
-    /**
-     * 查询所有项目。
-     *
-     * @return 所有数据
-     */
-    @GetMapping("list")
-    @Operation(description="查询所有项目")
-    public List<Project> list() {
-        return commonProjectService.list();
+    @PostMapping("/switch")
+    @Operation(summary = "切换项目")
+    @HasAuthorize(PermissionConstants.PROJECT_BASE_INFO_READ)
+    public UserDTO switchProject(@RequestBody ProjectSwitchRequest request) {
+        return projectService.switchProject(request, SessionUtils.getUserId());
     }
-
-    /**
-     * 根据项目主键获取详细信息。
-     *
-     * @param id 项目主键
-     * @return 项目详情
-     */
-    @GetMapping("getInfo/{id}")
-    @Operation(description="根据主键获取项目")
-    public Project getInfo(@PathVariable Serializable id) {
-        return commonProjectService.getById(id);
-    }
-
-    /**
-     * 分页查询项目。
-     *
-     * @param page 分页对象
-     * @return 分页对象
-     */
-    @GetMapping("page")
-    @Operation(description="分页查询项目")
-    public Page<Project> page(@Parameter(description="分页信息")Page<Project> page) {
-        return commonProjectService.page(page);
-    }
-
 }

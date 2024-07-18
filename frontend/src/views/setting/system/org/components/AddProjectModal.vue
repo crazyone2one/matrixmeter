@@ -2,7 +2,7 @@
 import {useAppStore, useUserStore} from "/@/store";
 import {useI18n} from "/@/hooks/use-i18n.ts";
 import {CreateOrUpdateSystemProjectParams} from "/@/api/interface/setting/system/org-project.ts";
-import {computed, h, ref, watchEffect} from "vue";
+import {computed, ref, watchEffect} from "vue";
 import {FormInst, FormRules, NButton} from "naive-ui";
 import {useForm, useRequest} from "alova/client";
 import {
@@ -13,7 +13,6 @@ import {
 import {OrgProjectTableItem, SystemOrgOption} from "/@/api/interface/setting/org-project.ts";
 import Icon from '/@/components/icon/index.vue'
 import {UserTableItem} from "/@/api/interface/setting/user-group.ts";
-import {hasAnyPermission} from "/@/utils/permission.ts";
 import {showUpdateOrCreateMessage} from "/@/views/setting/utils.ts";
 
 const appStore = useAppStore();
@@ -98,8 +97,8 @@ const handleBeforeOk = () => {
       return;
     }
     submit().then(res => {
-      console.log(res)
       showUpdateOrCreateMessage(isEdit.value, res.id, res.organizationId);
+      appStore.initProjectList()
       handleCancel(true);
     })
   })

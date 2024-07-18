@@ -78,7 +78,7 @@ const columns: DataTableColumns<OrgProjectTableItem> = [
   },
   {
     title: t('system.organization.name'),
-    key: 'name',
+    key: 'name',width: 200,
     ellipsis: {
       tooltip: true
     }
