@@ -42,7 +42,7 @@ public class Codegen {
         //设置表前缀和只生成哪些表，setGenerateTable 未配置时，生成所有表
         globalConfig.getStrategyConfig()
                 .setTablePrefix("tb_")
-                .setGenerateTable("test_resource_pool");
+                .setGenerateTable("test_plan_module");
 
         //设置生成 entity 并启用 Lombok
         globalConfig.enableEntity()
@@ -55,9 +55,10 @@ public class Codegen {
 
         //设置生成 mapper
         //globalConfig.enableController();
-        globalConfig.enableService();
-        globalConfig.enableServiceImpl();
+        //globalConfig.enableService();
+        //globalConfig.enableServiceImpl();
         globalConfig.enableMapper();
+        globalConfig.enableMapperXml();
 
         //可以单独配置某个列
         ColumnConfig columnConfig = new ColumnConfig();
@@ -67,8 +68,8 @@ public class Codegen {
         columnConfig2.setColumnName("update_time");
         columnConfig2.setOnInsertValue("now()");
         columnConfig2.setOnUpdateValue("now()");
-        //globalConfig.getStrategyConfig().setColumnConfig("test_resource_pool", columnConfig);
-        //globalConfig.getStrategyConfig().setColumnConfig("test_resource_pool", columnConfig2);
+        //globalConfig.getStrategyConfig().setColumnConfig("test_plan_case_execute_history", columnConfig);
+        //globalConfig.getStrategyConfig().setColumnConfig("api_scenario", columnConfig2);
         globalConfig.getJavadocConfig().setAuthor("11's papa").setSince("1.0.0 " + LocalDateTime.now());
         return globalConfig;
     }

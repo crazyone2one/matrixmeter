@@ -7,12 +7,15 @@ import cn.master.matrix.entity.Project;
 import cn.master.matrix.entity.User;
 import cn.master.matrix.entity.UserRoleRelation;
 import cn.master.matrix.exception.CustomException;
+import cn.master.matrix.mapper.ProjectMapper;
 import cn.master.matrix.payload.dto.ProjectDTO;
 import cn.master.matrix.payload.dto.request.project.ProjectSwitchRequest;
 import cn.master.matrix.payload.dto.user.UserDTO;
 import cn.master.matrix.service.CommonProjectService;
 import cn.master.matrix.service.ProjectService;
 import cn.master.matrix.service.UserService;
+import cn.master.matrix.util.CommonBeanFactory;
+import cn.master.matrix.util.ServiceUtils;
 import cn.master.matrix.util.Translator;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.update.UpdateChain;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 import static cn.master.matrix.entity.table.ProjectTableDef.PROJECT;
 import static cn.master.matrix.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
@@ -169,6 +173,11 @@ public class ProjectServiceImpl implements ProjectService {
                 .set(USER.LAST_PROJECT_ID, request.getProjectId())
                 .where(USER.ID.eq(request.getUserId())).update();
         return userService.getUserDTO(request.getUserId());
+    }
+
+    @Override
+    public Project checkResourceExist(String projectId) {
+        return ServiceUtils.checkResourceExist(Objects.requireNonNull(CommonBeanFactory.getBean(ProjectMapper.class)).selectOneById(projectId), "permission.project.name");
     }
 
     private void checkOrg(String organizationId) {

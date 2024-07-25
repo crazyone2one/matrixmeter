@@ -1,6 +1,10 @@
 package cn.master.matrix.util;
 
 import cn.master.matrix.exception.CustomException;
+import org.apache.commons.collections4.CollectionUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static cn.master.matrix.handler.result.MmHttpResultCode.NOT_FOUND;
 
@@ -10,6 +14,7 @@ import static cn.master.matrix.handler.result.MmHttpResultCode.NOT_FOUND;
 public class ServiceUtils {
     //用于排序的pos
     public static final int POS_STEP = 4096;
+    private static final int MAX_TAG_SIZE = 10;
 
     /**
      * 保存资源名称，在处理 NOT_FOUND 异常时，拼接资源名称
@@ -30,5 +35,14 @@ public class ServiceUtils {
 
     public static void clearResourceName() {
         RESOURCE_NAME.remove();
+    }
+
+    public static List<String> parseTags(List<String> tags) {
+        if (CollectionUtils.isNotEmpty(tags) && tags.size() > MAX_TAG_SIZE) {
+            List<String> returnTags = new ArrayList<>(tags.stream().distinct().toList());
+            return returnTags.subList(0, MAX_TAG_SIZE);
+        } else {
+            return tags;
+        }
     }
 }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.master.matrix.mapper.TestPlanMapper">
+
+    <select id="selectNodeByPosOperator"
+            parameterType="cn.master.matrix.payload.dto.project.NodeSortQueryParam"
+            resultType="cn.master.matrix.payload.dto.project.DropNode">
+        SELECT id, pos
+        FROM test_plan
+        WHERE group_id = #{parentId}
+        <if test="operator == 'moreThan'">
+            AND pos &gt; #{pos}
+        </if>
+        <if test="operator == 'lessThan'">
+            AND pos &lt; #{pos}
+        </if>
+        ORDER BY pos
+        <if test="operator == 'lessThan' or operator == 'latest'">
+            DESC
+        </if>
+        LIMIT 1
+    </select>
+</mapper>

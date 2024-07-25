@@ -1,7 +1,11 @@
 package cn.master.matrix.service;
 
+import cn.master.matrix.payload.dto.project.request.ProjectApplicationRequest;
 import com.mybatisflex.core.service.IService;
 import cn.master.matrix.entity.ProjectApplication;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 项目应用 服务层。
@@ -14,4 +18,10 @@ public interface ProjectApplicationService extends IService<ProjectApplication> 
     void update(ProjectApplication projectApplication, String currentUser);
 
     void createOrUpdateConfig(ProjectApplication application);
+
+    ProjectApplication getByType(String projectId, String type);
+
+    Map<String, Object> get(ProjectApplicationRequest projectApplicationRequest, List<String> collect);
+
+    void putResourcePool(String projectId, Map<String, Object> configMap, String type);
 }

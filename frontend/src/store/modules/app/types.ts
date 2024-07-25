@@ -1,5 +1,6 @@
 import type {RouteRecordNormalized, RouteRecordRaw} from "vue-router";
 import {ProjectListItem} from "/@/api/interface/setting/project.ts";
+import {BreadcrumbItem} from "/@/router/routes/types.ts";
 
 export interface AppState {
     navbar: boolean;
@@ -17,7 +18,7 @@ export interface AppState {
     loadingTip: string;
     topMenus: RouteRecordRaw[];
     currentTopMenu: RouteRecordRaw;
-    //   breadcrumbList: BreadcrumbItem[];
+    breadcrumbList: BreadcrumbItem[];
     currentOrgId: string;
     currentProjectId: string;
     //   pageSize: number;

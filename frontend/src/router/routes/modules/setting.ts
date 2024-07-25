@@ -134,6 +134,50 @@ const Setting: AppRouteRecordRaw = {
             isTopMenu: true,
           },
         },
+        {
+          path: "project",
+          name: SettingRouteEnum.SETTING_ORGANIZATION_PROJECT,
+          component: () =>
+              import("/@/views/setting/organization/project/index.vue"),
+          meta: {
+            locale: "menu.settings.organization.project",
+            roles: ["ORGANIZATION_PROJECT:READ"],
+            isTopMenu: true,
+          },
+        },
+        {
+          path: "template",
+          name: SettingRouteEnum.SETTING_ORGANIZATION_TEMPLATE,
+          component: () =>
+              import("/@/views/setting/organization/template/index.vue"),
+          meta: {
+            locale: "menu.settings.organization.template",
+            roles: ["ORGANIZATION_TEMPLATE:READ"],
+            isTopMenu: true,
+          },
+        },
+        // 模板列表-模板字段设置
+        {
+          path: 'templateFiledSetting',
+          name: SettingRouteEnum.SETTING_ORGANIZATION_TEMPLATE_FILED_SETTING,
+          component: () => import('/@/views/setting/organization/template/components/OrgFieldSetting.vue'),
+          meta: {
+            locale: 'menu.settings.organization.templateFieldSetting',
+            roles: ['ORGANIZATION_TEMPLATE:READ'],
+            breadcrumbs: [
+              {
+                name: SettingRouteEnum.SETTING_ORGANIZATION_TEMPLATE,
+                locale: 'menu.settings.organization.template',
+              },
+              {
+                name: SettingRouteEnum.SETTING_ORGANIZATION_TEMPLATE_FILED_SETTING,
+                locale: 'menu.settings.organization.templateFieldSetting',
+                editLocale: 'menu.settings.organization.templateFieldSetting',
+                query: ['type'],
+              },
+            ],
+          },
+        },
       ],
     },
   ],

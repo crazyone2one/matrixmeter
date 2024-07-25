@@ -1,5 +1,7 @@
 package cn.master.matrix.util;
 
+import lombok.val;
+
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -78,7 +80,7 @@ public class DateUtils {
      *
      * @return Map<String, String>(2); key取值范围：firstTime/lastTime
      */
-    public static Map<String, Date> getWeedFirstTimeAndLastTime(Date date) throws Exception{
+    public static Map<String, Date> getWeedFirstTimeAndLastTime(Date date) throws Exception {
         Map<String, Date> returnMap = new HashMap<>();
         Calendar calendar = Calendar.getInstance();
         calendar.setFirstDayOfWeek(Calendar.MONDAY);
@@ -146,7 +148,14 @@ public class DateUtils {
         calendar.set(Calendar.MILLISECOND, 999);
         return calendar.getTimeInMillis();
     }
+
     public static long localDate2Long(LocalDateTime localDateTime) {
         return localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+
+    public static LocalDateTime date2LocalDate(Date date) {
+        val instant = date.toInstant();
+        val zoneId = ZoneId.systemDefault();
+        return instant.atZone(zoneId).toLocalDateTime();
     }
 }

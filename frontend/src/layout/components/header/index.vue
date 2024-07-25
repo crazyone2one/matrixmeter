@@ -9,6 +9,7 @@ import {switchProject} from "/@/api/modules/project-manage/project.ts";
 import router from "/@/router";
 import AddProjectModal from '/@/views/setting/system/org/components/AddProjectModal.vue'
 import {ref} from "vue";
+import TopBreadcrumb from "/@/layout/components/header/TopBreadcrumb.vue";
 
 const appStore = useAppStore();
 const userStore = useUserStore()
@@ -26,6 +27,7 @@ const handleUpdateValue = (value: string) => {
         });
       })
 }
+
 </script>
 <template>
   <n-layout-header bordered>
@@ -46,10 +48,7 @@ const handleUpdateValue = (value: string) => {
     <n-split default-size="0.1" :resize-trigger-size="0.1" style="margin-left: 20px"
              :pane-1-style="{'margin-right': '20px'}">
       <template #1>
-        <n-breadcrumb style="margin-top: 8px">
-          <n-breadcrumb-item>Dashboard</n-breadcrumb-item>
-          <n-breadcrumb-item>Home</n-breadcrumb-item>
-        </n-breadcrumb>
+        <top-breadcrumb/>
       </template>
       <template #2>
         <top-menu/>

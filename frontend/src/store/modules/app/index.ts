@@ -4,6 +4,7 @@ import {RouteRecordRaw} from "vue-router";
 import {AppState} from "./types";
 import {cloneDeep} from "lodash-es";
 import {getProjectList} from "/@/api/modules/project-manage/project.ts";
+import {BreadcrumbItem} from "/@/router/routes/types.ts";
 
 const useAppStore = defineStore(
     "app",
@@ -31,7 +32,8 @@ const useAppStore = defineStore(
             currentMenuConfig: [],
             packageType: "",
             ordList: [],
-            projectList: []
+            projectList: [],
+            breadcrumbList: []
         });
         const toggleMenu = (value: boolean) => {
             state.value.hideMenu = value;
@@ -56,16 +58,20 @@ const useAppStore = defineStore(
                 state.value.projectList = [];
             }
         }
+        const setBreadcrumbList = (breadcrumbs: BreadcrumbItem[] | undefined) => {
+            state.value.breadcrumbList = breadcrumbs ? cloneDeep(breadcrumbs) : []
+        }
         return {
             state,
             toggleMenu,
             setCurrentOrgId,
-            setCurrentProjectId, setTopMenus, getTopMenus, getCurrentTopMenu, setCurrentTopMenu, initProjectList
+            setCurrentProjectId, setTopMenus, getTopMenus, getCurrentTopMenu, setCurrentTopMenu, initProjectList,
+            setBreadcrumbList
         };
     },
     {
         persist: {
-            paths: ["state.currentOrgId", "state.currentProjectId",'state.projectList'],
+            paths: ["state.currentOrgId", "state.currentProjectId", 'state.projectList'],
         },
     }
 );

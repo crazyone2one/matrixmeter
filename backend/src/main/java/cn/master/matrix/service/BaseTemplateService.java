@@ -50,4 +50,6 @@ public interface BaseTemplateService extends IService<Template> {
     Template update(Template template, List<TemplateCustomFieldRequest> customFields, List<TemplateSystemCustomFieldRequest> systemFields);
 
     void delete(String id);
+
+    Template get(String id);
 }

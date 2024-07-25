@@ -18,4 +18,6 @@ public interface ProjectService {
     List<Project> getUserProjectWidthModule(String organizationId, String module, String userId);
 
     UserDTO switchProject(ProjectSwitchRequest request, String userId);
+
+    Project checkResourceExist(String projectId);
 }

@@ -1,3 +1,6 @@
+import {RequestMethods} from "/@/enums/apiEnum.ts";
+import {TreeOption} from "naive-ui";
+
 export default interface CommonResponse<T> {
     code: number;
     message: string;
@@ -53,4 +56,18 @@ export interface BatchApiParams {
     versionId?: string; // 版本 ID
     refId?: string; // 版本来源
     protocols?: string[]; // 协议集合
+}
+// 模块树节点
+export interface ModuleTreeNode extends TreeOption {
+    id: string;
+    name: string;
+    type: 'MODULE' | 'API';
+    children: ModuleTreeNode[];
+    attachInfo: {
+        method?: keyof typeof RequestMethods;
+        protocol: string;
+    }; // 附加信息
+    count: 0;
+    parentId: string;
+    path: string;
 }

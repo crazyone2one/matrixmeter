@@ -274,6 +274,11 @@ public class BaseTemplateServiceImpl extends ServiceImpl<TemplateMapper, Templat
         baseTemplateCustomFieldService.deleteByTemplateId(id);
     }
 
+    @Override
+    public Template get(String id) {
+        return mapper.selectOneById(id);
+    }
+
     protected void checkInternal(Template template) {
         if (template.getInternal()) {
             throw new CustomException(INTERNAL_TEMPLATE_PERMISSION);
